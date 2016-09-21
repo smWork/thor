@@ -195,14 +195,14 @@ namespace valhalla {
       if (path_edges.size() == 0) {
         get_path(path_algorithm, origin, destination, path_edges);
         if (path_edges.size() == 0) {
-          throw std::runtime_error("No path could be found for input");
+          throw valhalla_exception_t{400, 442};
         }
       } else {
         // Get the path in a temporary vector
         std::vector<thor::PathInfo> temp_path;
         get_path(path_algorithm, origin, destination, temp_path);
         if (temp_path.size() == 0) {
-          throw std::runtime_error("No path could be found for input");
+          throw valhalla_exception_t{400, 442};
         }
 
         // Append the temp_path edges to path_edges, adding the elapsed
@@ -296,7 +296,7 @@ namespace valhalla {
       if (path_edges.size() == 0) {
         get_path(path_algorithm, origin, destination, path_edges);
         if (path_edges.size() == 0) {
-          throw std::runtime_error("No path could be found for input");
+          throw valhalla_exception_t{400, 442};
         }
 
         if (date_time_type && *date_time_type == 0 && origin_date_time.empty() &&
@@ -307,7 +307,7 @@ namespace valhalla {
         std::vector<thor::PathInfo> temp_path;
         get_path(path_algorithm, origin, destination, temp_path);
         if (temp_path.size() == 0) {
-          throw std::runtime_error("No path could be found for input");
+          throw valhalla_exception_t{400, 442};
         }
 
         if (date_time_type && *date_time_type == 0 && origin_date_time.empty() &&
