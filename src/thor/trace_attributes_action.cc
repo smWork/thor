@@ -16,7 +16,7 @@ namespace valhalla {
   namespace thor {
 
     worker_t::result_t  thor_worker_t::trace_attributes(const boost::property_tree::ptree &request, prime_server::http_request_t::info_t& request_info) {
-      parse_shape(request);
+    //  parse_shape(request);
       parse_costing(request);
 
       //TODO: call Meili for map matching to get a collection of pathLocation Edges
