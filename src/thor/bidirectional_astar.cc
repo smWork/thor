@@ -669,7 +669,7 @@ std::vector<PathInfo> BidirectionalAStar::FormPath(GraphReader& graphreader) {
   for (auto edgelabel_index = idx1; edgelabel_index != kInvalidLabel;
       edgelabel_index = edgelabels_forward_[edgelabel_index].predecessor()) {
     const EdgeLabel& edgelabel = edgelabels_forward_[edgelabel_index];
-    path.emplace_back(edgelabel.mode(), travel_type_, edgelabel.cost().secs,
+    path.emplace_back(edgelabel.mode(), edgelabel.cost().secs,
                       edgelabel.edgeid(), edgelabel.tripid());
   }
 
@@ -714,7 +714,7 @@ std::vector<PathInfo> BidirectionalAStar::FormPath(GraphReader& graphreader) {
       secs += edgelabel.cost().secs - edgelabels_reverse_[predidx].cost().secs;
     }
     secs += tc;
-    path.emplace_back(edgelabel.mode(), travel_type_, static_cast<uint32_t>(secs),
+    path.emplace_back(edgelabel.mode(),static_cast<uint32_t>(secs),
                             oppedge, edgelabel.tripid());
 
     // Update edgelabel_index and transition cost to apply at next iteration
