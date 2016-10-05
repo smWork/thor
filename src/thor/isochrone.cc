@@ -689,7 +689,7 @@ void Isochrone::UpdateIsoTile(const EdgeLabel& pred, GraphReader& graphreader,
 
   // Get the shape and make sure shape is forward
   // direction and resample it to the shape interval.
-  auto shape = tile->edgeinfo(edge->edgeinfo_offset())->shape();
+  auto shape = tile->edgeinfo(edge->edgeinfo_offset()).shape();
   if (!edge->forward()) {
     std::reverse(shape.begin(), shape.end());
   }
