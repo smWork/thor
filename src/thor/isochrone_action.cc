@@ -29,7 +29,7 @@ namespace valhalla {
       auto denoise = std::max(std::min(request.get<float>("denoise", 1.f), 1.f), 0.f);
 
       //get the raster
-      auto grid = costing == "multimodal" ?
+      auto grid = (costing == "multimodal" || costing == "transit") ?
         isochrone_gen.ComputeMultiModal(correlated, contours.back(), reader, mode_costing, mode) :
         isochrone_gen.Compute(correlated, contours.back(), reader, mode_costing, mode);
 

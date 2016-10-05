@@ -166,7 +166,7 @@ namespace valhalla {
       auto costing = request.get<std::string>("costing");
 
       // Set travel mode and construct costing
-      if (costing == "multimodal") {
+      if (costing == "multimodal" || costing == "transit") {
         // For multi-modal we construct costing for all modes and set the
         // initial mode to pedestrian. (TODO - allow other initial modes)
         mode_costing[0] = get_costing(request, "auto");
