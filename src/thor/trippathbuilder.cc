@@ -12,10 +12,13 @@
 #include <valhalla/baldr/signinfo.h>
 #include <valhalla/baldr/graphconstants.h>
 #include <valhalla/midgard/pointll.h>
+#include <valhalla/midgard/encoded.h>
 #include <valhalla/midgard/logging.h>
+#include <valhalla/sif/costconstants.h>
 
 using namespace valhalla::baldr;
 using namespace valhalla::midgard;
+using namespace valhalla::sif;
 using namespace valhalla::odin;
 
 namespace {
@@ -148,6 +151,43 @@ TripPath_RoadClass GetTripPathRoadClass(RoadClass road_class) {
       return TripPath_RoadClass_kResidential;
     case RoadClass::kServiceOther:
       return TripPath_RoadClass_kServiceOther;
+  }
+}
+
+TripPath_VehicleType GetTripPathVehicleType(uint8_t type) {
+  switch (type) {
+    case static_cast<uint8_t>(VehicleType::kCar):
+      return TripPath_VehicleType::TripPath_VehicleType_kCar;
+    case static_cast<uint8_t>(VehicleType::kMotorcycle):
+      return TripPath_VehicleType::TripPath_VehicleType_kMotorcycle;
+    case static_cast<uint8_t>(VehicleType::kBus):
+      return TripPath_VehicleType::TripPath_VehicleType_kAutoBus;
+    case static_cast<uint8_t>(VehicleType::kTractorTrailer):
+      return TripPath_VehicleType::TripPath_VehicleType_kTractorTrailer;
+  }
+}
+
+TripPath_PedestrianType GetTripPathPedestrianType(uint8_t type) {
+  switch (type) {
+    case static_cast<uint8_t>(PedestrianType::kFoot):
+      return TripPath_PedestrianType::TripPath_PedestrianType_kFoot;
+    case static_cast<uint8_t>(PedestrianType::kWheelchair):
+      return TripPath_PedestrianType::TripPath_PedestrianType_kWheelchair;
+    case static_cast<uint8_t>(PedestrianType::kSegway):
+      return TripPath_PedestrianType::TripPath_PedestrianType_kSegway;
+  }
+}
+
+TripPath_BicycleType GetTripPathBicycleType(uint8_t type) {
+  switch (type) {
+    case static_cast<uint8_t>(BicycleType::kRoad):
+      return TripPath_BicycleType::TripPath_BicycleType_kRoad;
+    case static_cast<uint8_t>(BicycleType::kCross):
+      return TripPath_BicycleType::TripPath_BicycleType_kCross;
+    case static_cast<uint8_t>(BicycleType::kHybrid):
+      return TripPath_BicycleType::TripPath_BicycleType_kHybrid;
+    case static_cast<uint8_t>(BicycleType::kMountain):
+      return TripPath_BicycleType::TripPath_BicycleType_kMountain;
   }
 }
 
@@ -370,8 +410,9 @@ TripPath TripPathBuilder::Build(GraphReader& graphreader,
     TrimShape(shape, start_pct * total, start_vrt, end_pct * total, end_vrt);
 
     // Add trip edge
-    auto trip_edge = AddTripEdge(path.front().edgeid.id(), path.front().trip_id, 0,
-                                 path.front().mode, edge, trip_path.add_node(), tile,
+    auto trip_edge = AddTripEdge(path.front().edgeid.id(), path.front().trip_id,
+                                 0, path.front().mode, path.front().travel_type,
+                                 edge, trip_path.add_node(), tile,
                                  std::abs(end_pct - start_pct));
     trip_edge->set_begin_shape_index(0);
     trip_edge->set_end_shape_index(shape.size()-1);
@@ -447,6 +488,7 @@ TripPath TripPathBuilder::Build(GraphReader& graphreader,
     const GraphTile* graphtile = graphreader.GetGraphTile(edge);
     const DirectedEdge* directededge = graphtile->directededge(edge);
     const sif::TravelMode mode = edge_itr->mode;
+    const uint8_t travel_type = edge_itr->travel_type;
 
     // Skip transition edges
     if (directededge->trans_up() || directededge->trans_down()) {
@@ -613,12 +655,12 @@ TripPath TripPathBuilder::Build(GraphReader& graphreader,
     float length_pct = (
         is_first_edge ? 1.f - start_pct : (is_last_edge ? end_pct : 1.f));
     TripPath_Edge* trip_edge = AddTripEdge(edge.id(), trip_id, block_id, mode,
-                      directededge, trip_node, graphtile, length_pct);
+                                           travel_type, directededge, trip_node,
+                                           graphtile, length_pct);
 
     // Get the shape and set shape indexes (directed edge forward flag
     // determines whether shape is traversed forward or reverse).
-    std::unique_ptr<const EdgeInfo> edgeinfo = graphtile->edgeinfo(
-        directededge->edgeinfo_offset());
+    auto edgeinfo = graphtile->edgeinfo(directededge->edgeinfo_offset());
     if (is_first_edge) {
       trip_edge->set_begin_shape_index(0);
     } else {
@@ -770,6 +812,7 @@ TripPath_Edge* TripPathBuilder::AddTripEdge(const uint32_t idx,
                                             const uint32_t trip_id,
                                             const uint32_t block_id,
                                             const sif::TravelMode mode,
+                                            const uint8_t travel_type,
                                             const DirectedEdge* directededge,
                                             TripPath_Node* trip_node,
                                             const GraphTile* graphtile,
@@ -778,8 +821,7 @@ TripPath_Edge* TripPathBuilder::AddTripEdge(const uint32_t idx,
   TripPath_Edge* trip_edge = trip_node->mutable_edge();
 
   // Get the edgeinfo and list of names - add to the trip edge.
-  std::unique_ptr<const EdgeInfo> edgeinfo = graphtile->edgeinfo(
-      directededge->edgeinfo_offset());
+  auto edgeinfo = graphtile->edgeinfo(directededge->edgeinfo_offset());
   std::vector<std::string> names = edgeinfo->GetNames();
   for (const auto& name : names) {
     trip_edge->add_name(name);
@@ -985,14 +1027,19 @@ TripPath_Edge* TripPathBuilder::AddTripEdge(const uint32_t idx,
   // Set drive_on_right the right way
   trip_edge->set_drive_on_right(directededge->drive_on_right());
 
-  if (mode == sif::TravelMode::kBicycle)
+  // Set the mode and travel type
+  if (mode == sif::TravelMode::kBicycle) {
     trip_edge->set_travel_mode(TripPath_TravelMode::TripPath_TravelMode_kBicycle);
-  else if (mode == sif::TravelMode::kDrive)
+    trip_edge->set_bicycle_type(GetTripPathBicycleType(travel_type));
+  } else if (mode == sif::TravelMode::kDrive) {
     trip_edge->set_travel_mode(TripPath_TravelMode::TripPath_TravelMode_kDrive);
-  else if (mode == sif::TravelMode::kPedestrian)
+    trip_edge->set_vehicle_type(GetTripPathVehicleType(travel_type));
+  } else if (mode == sif::TravelMode::kPedestrian) {
     trip_edge->set_travel_mode(TripPath_TravelMode::TripPath_TravelMode_kPedestrian);
-  else if (mode == sif::TravelMode::kPublicTransit)
+    trip_edge->set_pedestrian_type(GetTripPathPedestrianType(travel_type));
+  } else if (mode == sif::TravelMode::kPublicTransit) {
     trip_edge->set_travel_mode(TripPath_TravelMode::TripPath_TravelMode_kTransit);
+  }
 
   /////////////////////////////////////////////////////////////////////////////
   // Process transit information

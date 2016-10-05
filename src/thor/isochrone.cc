@@ -335,7 +335,7 @@ std::shared_ptr<const GriddedData<PointLL> > Isochrone::ComputeReverse(
       edgelabels_.emplace_back(predindex, edgeid, oppedge,
                     directededge, newcost, newcost.cost, 0.0f,
                     directededge->restrictions(),
-                    directededge->opp_local_idx(), mode_, tc);
+                    directededge->opp_local_idx(), mode_, tc, false);
     }
   }
   return isotile_;      // Should never get here
@@ -356,6 +356,8 @@ std::shared_ptr<const GriddedData<PointLL> > Isochrone::ComputeMultiModal(
   mode_ = mode;
   const auto& costing = mode_costing[static_cast<uint8_t>(mode)];
   const auto& tc = mode_costing[static_cast<uint8_t>(TravelMode::kPublicTransit)];
+  bool wheelchair = false;  // Can take departures without wheelchair
+  bool bicycle = false;     // Can take departures without bicycle
 
   // Get maximum transfer distance (TODO - want to allow unlimited walking once
   // you get off the transit stop...)
@@ -515,7 +517,8 @@ std::shared_ptr<const GriddedData<PointLL> > Isochrone::ComputeMultiModal(
 
         // Look up the next departure along this edge
         const TransitDeparture* departure = tile->GetNextDeparture(
-                    directededge->lineid(), localtime, day, dow, date_before_tile);
+                    directededge->lineid(), localtime, day, dow, date_before_tile,
+                    wheelchair, bicycle);
         if (departure) {
           // Check if there has been a mode change
           mode_change = (mode_ == TravelMode::kPedestrian);
@@ -540,7 +543,8 @@ std::shared_ptr<const GriddedData<PointLL> > Isochrone::ComputeMultiModal(
               // TODO - is there a better way?
               if (localtime + 30 > departure->departure_time()) {
                   departure = tile->GetNextDeparture(directededge->lineid(),
-                                localtime + 30, day, dow, date_before_tile);
+                                localtime + 30, day, dow, date_before_tile,
+                                wheelchair, bicycle);
                 if (!departure)
                   continue;
               }
@@ -663,6 +667,13 @@ void Isochrone::UpdateIsoTile(const EdgeLabel& pred, GraphReader& graphreader,
       return;
   }
 
+  // Get the DirectedEdge because we'll need its shape
+  const GraphTile* tile = graphreader.GetGraphTile(pred.edgeid().Tile_Base());
+  const DirectedEdge* edge = tile->directededge(pred.edgeid());
+  // Transit lines can't really be "reached" you really just pass through those cells
+  if(edge->IsTransitLine())
+    return;
+
   // Get time at the end node of the predecessor
   float secs1 = pred.cost().secs;
 
@@ -676,10 +687,8 @@ void Isochrone::UpdateIsoTile(const EdgeLabel& pred, GraphReader& graphreader,
     secs0 = edgelabels_[predindex].cost().secs;
   }
 
-  // Get the directed edge and its shape. Make sure shape is forward
+  // Get the shape and make sure shape is forward
   // direction and resample it to the shape interval.
-  const GraphTile* tile = graphreader.GetGraphTile(pred.edgeid().Tile_Base());
-  const DirectedEdge* edge = tile->directededge(pred.edgeid());
   auto shape = tile->edgeinfo(edge->edgeinfo_offset())->shape();
   if (!edge->forward()) {
     std::reverse(shape.begin(), shape.end());
@@ -833,7 +842,7 @@ void Isochrone::SetDestinationLocations(GraphReader& graphreader,
       edgestatus_->Set(opp_edge_id, EdgeSet::kTemporary, idx);
       edgelabels_.emplace_back(kInvalidLabel, opp_edge_id, edgeid,
                opp_dir_edge, cost, cost.cost, 0.0f, opp_dir_edge->restrictions(),
-               opp_dir_edge->opp_local_idx(), mode_, c);
+               opp_dir_edge->opp_local_idx(), mode_, c, false);
     }
   }
 }

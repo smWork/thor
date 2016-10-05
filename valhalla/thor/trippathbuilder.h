@@ -54,6 +54,7 @@ class TripPathBuilder {
                                           const uint32_t trip_id,
                                           const uint32_t block_id,
                                           const sif::TravelMode mode,
+                                          const uint8_t travel_type,
                                           const baldr::DirectedEdge* directededge,
                                           odin::TripPath_Node* trip_node,
                                           const baldr::GraphTile* graphtile,

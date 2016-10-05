@@ -19,6 +19,7 @@ constexpr uint64_t kInitialEdgeLabelCount = 500000;
 // Default constructor
 AStarPathAlgorithm::AStarPathAlgorithm()
     : mode_(TravelMode::kDrive),
+      travel_type_(0),
       allow_transitions_(false),
       adjacencylist_(nullptr),
       edgestatus_(nullptr),
@@ -114,6 +115,7 @@ std::vector<PathInfo> AStarPathAlgorithm::GetBestPath(PathLocation& origin,
   // Set the mode and costing
   mode_ = mode;
   const auto& costing = mode_costing[static_cast<uint32_t>(mode_)];
+  travel_type_ = costing->travel_type();
 
   // Initialize - create adjacency list, edgestatus support, A*, etc.
   //Note: because we can correlate to more than one place for a given PathLocation
@@ -464,7 +466,7 @@ std::vector<PathInfo> AStarPathAlgorithm::FormPath(const uint32_t dest) {
   for(auto edgelabel_index = dest; edgelabel_index != kInvalidLabel;
       edgelabel_index = edgelabels_[edgelabel_index].predecessor()) {
     const EdgeLabel& edgelabel = edgelabels_[edgelabel_index];
-    path.emplace_back(edgelabel.mode(), edgelabel.cost().secs,
+    path.emplace_back(edgelabel.mode(), travel_type_, edgelabel.cost().secs,
                       edgelabel.edgeid(), edgelabel.tripid());
   }
 

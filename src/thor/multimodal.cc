@@ -103,6 +103,8 @@ std::vector<PathInfo> MultiModalPathAlgorithm::GetBestPath(
   mode_ = mode;
   const auto& costing = mode_costing[static_cast<uint32_t>(mode)];
   const auto& tc = mode_costing[static_cast<uint32_t>(TravelMode::kPublicTransit)];
+  bool wheelchair = false;  // Can take departures without wheelchair
+  bool bicycle = false;     // Can take departures without bicycle
 
   // Get maximum transfer distance
   uint32_t max_transfer_distance = costing->GetMaxTransferDistanceMM();
@@ -137,6 +139,8 @@ std::vector<PathInfo> MultiModalPathAlgorithm::GetBestPath(
   uint32_t nc = 0;       // Count of iterations with no convergence
                          // towards destination
   std::unordered_map<std::string, uint32_t> operators;
+  std::unordered_set<uint32_t> processed_tiles;
+
   const GraphTile* tile;
   while (true) {
     // Get next element from adjacency list. Check that it is valid. An
@@ -205,10 +209,20 @@ std::vector<PathInfo> MultiModalPathAlgorithm::GetBestPath(
     GraphId prior_stop = pred.prior_stopid();
     uint32_t operator_id = pred.transit_operator();
     if (nodeinfo->type() == NodeType::kMultiUseTransitStop) {
+
       // Get the transfer penalty when changing stations
       if (mode_ == TravelMode::kPedestrian && prior_stop.Is_Valid() && has_transit) {
         transfer_cost = tc->TransferCost();
       }
+
+      if (processed_tiles.find(tile->id().tileid()) == processed_tiles.end()) {
+        tc->AddToExcludeList(tile);
+        processed_tiles.emplace(tile->id().tileid());
+      }
+
+      //check if excluded.
+      if (tc->IsExcluded(tile, nodeinfo))
+        continue;
 
       // Add transfer time to the local time when entering a stop
       // as a pedestrian. This is a small added cost on top of
@@ -294,10 +308,14 @@ std::vector<PathInfo> MultiModalPathAlgorithm::GetBestPath(
         if (!tc->Allowed(directededge, pred, tile, edgeid)) {
           continue;
         }
+        //check if excluded.
+        if (tc->IsExcluded(tile, directededge))
+          continue;
 
         // Look up the next departure along this edge
         const TransitDeparture* departure = tile->GetNextDeparture(
-                    directededge->lineid(), localtime, day, dow, date_before_tile);
+                    directededge->lineid(), localtime, day, dow, date_before_tile,
+                    wheelchair, bicycle);
         if (departure) {
           // Check if there has been a mode change
           mode_change = (mode_ == TravelMode::kPedestrian);
@@ -322,7 +340,8 @@ std::vector<PathInfo> MultiModalPathAlgorithm::GetBestPath(
               // TODO - is there a better way?
               if (localtime + 30 > departure->departure_time()) {
                   departure = tile->GetNextDeparture(directededge->lineid(),
-                                localtime + 30, day, dow, date_before_tile);
+                                localtime + 30, day, dow, date_before_tile,
+                                wheelchair, bicycle);
                 if (!departure)
                   continue;
               }

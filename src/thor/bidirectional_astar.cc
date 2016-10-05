@@ -27,6 +27,7 @@ constexpr uint64_t kInitialEdgeLabelCountBD = 100000;
 BidirectionalAStar::BidirectionalAStar() {
   threshold_ = 0;
   mode_ = TravelMode::kDrive;
+  travel_type_ = 0;
   allow_transitions_ = false;
   adjacencylist_forward_ = nullptr;
   edgestatus_forward_ = nullptr;
@@ -115,6 +116,7 @@ std::vector<PathInfo> BidirectionalAStar::GetBestPath(PathLocation& origin,
   // Set the mode and costing
   mode_ = mode;
   const auto& costing = mode_costing[static_cast<uint32_t>(mode_)];
+  travel_type_ = costing->travel_type();
 
   // Initialize - create adjacency list, edgestatus support, A*, etc.
   Init(origin.edges.front().projected, destination.edges.front().projected,
@@ -206,7 +208,7 @@ std::vector<PathInfo> BidirectionalAStar::GetBestPath(PathLocation& origin,
       edgestatus_forward_->Update(pred.edgeid(), EdgeSet::kPermanent);
 
       // Prune path if predecessor is not a through edge
-      if (pred.not_thru()) {
+      if (pred.not_thru() && pred.not_thru_pruning()) {
         continue;
       }
 
@@ -253,7 +255,8 @@ std::vector<PathInfo> BidirectionalAStar::GetBestPath(PathLocation& origin,
                        pred.opp_edgeid(), directededge, pred.cost(),
                        pred.sortcost(), pred.distance(), pred.restrictions(),
                        pred.opp_local_idx(), mode_,
-                       Cost(pred.transition_cost(), pred.transition_secs()));
+                       Cost(pred.transition_cost(), pred.transition_secs()),
+                       pred.not_thru_pruning());
           }
           continue;
         }
@@ -304,7 +307,8 @@ std::vector<PathInfo> BidirectionalAStar::GetBestPath(PathLocation& origin,
         AddToForwardAdjacencyList(edgeid, sortcost);
         edgelabels_forward_.emplace_back(forward_pred_idx, edgeid, oppedge, directededge,
                       newcost, sortcost, dist, directededge->restrictions(),
-                      directededge->opp_local_idx(), mode_, tc);
+                      directededge->opp_local_idx(), mode_, tc,
+                      (pred.not_thru_pruning() || !directededge->not_thru()));
       }
     } else {
       // Expand reverse - set to get next edge from reverse adj. list
@@ -316,7 +320,7 @@ std::vector<PathInfo> BidirectionalAStar::GetBestPath(PathLocation& origin,
       edgestatus_reverse_->Update(pred2.edgeid(), EdgeSet::kPermanent);
 
       // Prune path if predecessor is not a through edge
-      if (pred2.not_thru()) {
+      if (pred2.not_thru() && pred2.not_thru_pruning()) {
         continue;
       }
 
@@ -371,7 +375,8 @@ std::vector<PathInfo> BidirectionalAStar::GetBestPath(PathLocation& origin,
                       pred2.opp_edgeid(), directededge, pred2.cost(),
                       pred2.sortcost(), pred2.distance(),
                       pred2.restrictions(), pred2.opp_local_idx(), mode_,
-                      Cost(pred2.transition_cost(), pred2.transition_secs()));
+                      Cost(pred2.transition_cost(), pred2.transition_secs()),
+                      pred2.not_thru_pruning());
           }
           continue;
         }
@@ -433,7 +438,8 @@ std::vector<PathInfo> BidirectionalAStar::GetBestPath(PathLocation& origin,
         edgelabels_reverse_.emplace_back(reverse_pred_idx, edgeid, oppedge,
                       directededge, newcost, sortcost, dist,
                       directededge->restrictions(),
-                      directededge->opp_local_idx(), mode_, tc);
+                      directededge->opp_local_idx(), mode_, tc,
+                      (pred2.not_thru_pruning() || !directededge->not_thru()));
       }
     }
   }
@@ -637,7 +643,7 @@ void BidirectionalAStar::SetDestination(GraphReader& graphreader,
     AddToReverseAdjacencyList(opp_edge_id, sortcost);
     edgelabels_reverse_.emplace_back(kInvalidLabel, opp_edge_id, edgeid,
              opp_dir_edge, cost, sortcost, dist, opp_dir_edge->restrictions(),
-             opp_dir_edge->opp_local_idx(), mode_, c);
+             opp_dir_edge->opp_local_idx(), mode_, c, false);
 
     // Set the initial not_thru flag to false. There is an issue with not_thru
     // flags on small loops. Set this to false here to override this for now.
@@ -663,7 +669,7 @@ std::vector<PathInfo> BidirectionalAStar::FormPath(GraphReader& graphreader) {
   for (auto edgelabel_index = idx1; edgelabel_index != kInvalidLabel;
       edgelabel_index = edgelabels_forward_[edgelabel_index].predecessor()) {
     const EdgeLabel& edgelabel = edgelabels_forward_[edgelabel_index];
-    path.emplace_back(edgelabel.mode(), edgelabel.cost().secs,
+    path.emplace_back(edgelabel.mode(), travel_type_, edgelabel.cost().secs,
                       edgelabel.edgeid(), edgelabel.tripid());
   }
 
@@ -708,7 +714,7 @@ std::vector<PathInfo> BidirectionalAStar::FormPath(GraphReader& graphreader) {
       secs += edgelabel.cost().secs - edgelabels_reverse_[predidx].cost().secs;
     }
     secs += tc;
-    path.emplace_back(edgelabel.mode(), static_cast<uint32_t>(secs),
+    path.emplace_back(edgelabel.mode(), travel_type_, static_cast<uint32_t>(secs),
                             oppedge, edgelabel.tripid());
 
     // Update edgelabel_index and transition cost to apply at next iteration
