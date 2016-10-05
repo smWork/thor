@@ -6,6 +6,7 @@
 
 #include <valhalla/baldr/graphid.h>
 #include <valhalla/baldr/graphreader.h>
+#include <valhalla/sif/costfactory.h>
 #include <valhalla/proto/trippath.pb.h>
 #include <valhalla/baldr/pathlocation.h>
 #include <valhalla/thor/pathinfo.h>
@@ -33,6 +34,7 @@ class TripPathBuilder {
    * For now just return length. TODO - modify to return trip path.
    */
   static odin::TripPath Build(baldr::GraphReader& graphreader,
+             const std::shared_ptr<sif::DynamicCost>* mode_costing,
              const std::vector<PathInfo>& path,
              baldr::PathLocation& origin,
              baldr::PathLocation& dest,

@@ -61,7 +61,7 @@ namespace valhalla {
       std::vector<baldr::PathLocation> correlated_s;
       std::vector<baldr::PathLocation> correlated_t;
       sif::CostFactory<sif::DynamicCost> factory;
-      valhalla::sif::cost_ptr_t mode_costing[4];    // TODO - max # of modes?
+      valhalla::sif::cost_ptr_t mode_costing[static_cast<int>(sif::TravelMode::kMaxTravelMode)];
       valhalla::baldr::GraphReader reader;
       // Path algorithms (TODO - perhaps use a map?))
       AStarPathAlgorithm astar;

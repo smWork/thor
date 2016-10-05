@@ -251,6 +251,7 @@ TripPathBuilder::~TripPathBuilder() {
 // TODO - probably need the location information passed in - to
 // add to the TripPath
 TripPath TripPathBuilder::Build(GraphReader& graphreader,
+                                const std::shared_ptr<sif::DynamicCost>* mode_costing,
                                 const std::vector<PathInfo>& path,
                                 PathLocation& origin,
                                 PathLocation& dest,
@@ -332,6 +333,13 @@ TripPath TripPathBuilder::Build(GraphReader& graphreader,
   if (origin.date_time_)
     origin_sec_from_mid = DateTime::seconds_from_midnight(*origin.date_time_);
 
+  // Create an array of travel types per mode
+  uint8_t travel_types[4];
+  for (uint32_t i = 0; i < 4; i++) {
+    travel_types[i] = (mode_costing[i] != nullptr)  ?
+          mode_costing[i]->travel_type() : 0;
+  }
+
   // Get the first nodes graph id by using the end node of the first edge to get the tile with the opposing edge
   // then use the opposing index to get the opposing edge, and its end node is the begin node of the original edge
   auto* first_edge =
@@ -411,9 +419,10 @@ TripPath TripPathBuilder::Build(GraphReader& graphreader,
 
     // Add trip edge
     auto trip_edge = AddTripEdge(path.front().edgeid.id(), path.front().trip_id,
-                                 0, path.front().mode, path.front().travel_type,
-                                 edge, trip_path.add_node(), tile,
-                                 std::abs(end_pct - start_pct));
+                       0, path.front().mode,
+                       travel_types[static_cast<int>(path.front().mode)],
+                       edge, trip_path.add_node(), tile,
+                       std::abs(end_pct - start_pct));
     trip_edge->set_begin_shape_index(0);
     trip_edge->set_end_shape_index(shape.size()-1);
     auto* node = trip_path.add_node();
@@ -488,7 +497,7 @@ TripPath TripPathBuilder::Build(GraphReader& graphreader,
     const GraphTile* graphtile = graphreader.GetGraphTile(edge);
     const DirectedEdge* directededge = graphtile->directededge(edge);
     const sif::TravelMode mode = edge_itr->mode;
-    const uint8_t travel_type = edge_itr->travel_type;
+    const uint8_t travel_type = travel_types[static_cast<uint32_t>(mode)];
 
     // Skip transition edges
     if (directededge->trans_up() || directededge->trans_down()) {
