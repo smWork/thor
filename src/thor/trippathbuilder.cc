@@ -387,7 +387,7 @@ TripPath TripPathBuilder::Build(GraphReader& graphreader,
 
     // Get the shape. Reverse if the directed edge direction does
     // not match the traversal direction (based on start and end percent).
-    auto shape = tile->edgeinfo(edge->edgeinfo_offset())->shape();
+    auto shape = tile->edgeinfo(edge->edgeinfo_offset()).shape();
     if (edge->forward() != (start_pct < end_pct)) {
       std::reverse(shape.begin(), shape.end());
     }
@@ -672,21 +672,21 @@ TripPath TripPathBuilder::Build(GraphReader& graphreader,
       float length = static_cast<float>(directededge->length()) * length_pct;
       if (directededge->forward() == is_last_edge) {
         AddPartialShape<std::vector<PointLL>::const_iterator>(
-            trip_shape, edgeinfo->shape().begin(), edgeinfo->shape().end(),
+            trip_shape, edgeinfo.shape().begin(), edgeinfo.shape().end(),
             length, is_last_edge, is_last_edge ? end_vrt : start_vrt);
       } else {
         AddPartialShape<std::vector<PointLL>::const_reverse_iterator>(
-            trip_shape, edgeinfo->shape().rbegin(), edgeinfo->shape().rend(),
+            trip_shape, edgeinfo.shape().rbegin(), edgeinfo.shape().rend(),
             length, is_last_edge, is_last_edge ? end_vrt : start_vrt);
       }
     }    // Just get the shape in there in the right direction
     else {
       if (directededge->forward())
-        trip_shape.insert(trip_shape.end(), edgeinfo->shape().begin() + 1,
-                          edgeinfo->shape().end());
+        trip_shape.insert(trip_shape.end(), edgeinfo.shape().begin() + 1,
+                          edgeinfo.shape().end());
       else
-        trip_shape.insert(trip_shape.end(), edgeinfo->shape().rbegin() + 1,
-                          edgeinfo->shape().rend());
+        trip_shape.insert(trip_shape.end(), edgeinfo.shape().rbegin() + 1,
+                          edgeinfo.shape().rend());
     }
     trip_edge->set_end_shape_index(trip_shape.size() - 1);
 
@@ -822,7 +822,7 @@ TripPath_Edge* TripPathBuilder::AddTripEdge(const uint32_t idx,
 
   // Get the edgeinfo and list of names - add to the trip edge.
   auto edgeinfo = graphtile->edgeinfo(directededge->edgeinfo_offset());
-  std::vector<std::string> names = edgeinfo->GetNames();
+  std::vector<std::string> names = edgeinfo.GetNames();
   for (const auto& name : names) {
     trip_edge->add_name(name);
   }
@@ -896,13 +896,13 @@ TripPath_Edge* TripPathBuilder::AddTripEdge(const uint32_t idx,
     trip_edge->set_begin_heading(
         std::round(
             PointLL::HeadingAlongPolyline(
-                edgeinfo->shape(),
+                edgeinfo.shape(),
                 GetOffsetForHeading(directededge->classification(),
                                     directededge->use()))));
     trip_edge->set_end_heading(
         std::round(
             PointLL::HeadingAtEndOfPolyline(
-                edgeinfo->shape(),
+                edgeinfo.shape(),
                 GetOffsetForHeading(directededge->classification(),
                                     directededge->use()))));
   } else {
@@ -927,7 +927,7 @@ TripPath_Edge* TripPathBuilder::AddTripEdge(const uint32_t idx,
         std::round(
             fmod(
                 (PointLL::HeadingAtEndOfPolyline(
-                    edgeinfo->shape(),
+                    edgeinfo.shape(),
                     GetOffsetForHeading(directededge->classification(),
                                         directededge->use())) + 180.0f),
                 360)));
@@ -936,7 +936,7 @@ TripPath_Edge* TripPathBuilder::AddTripEdge(const uint32_t idx,
         std::round(
             fmod(
                 (PointLL::HeadingAlongPolyline(
-                    edgeinfo->shape(),
+                    edgeinfo.shape(),
                     GetOffsetForHeading(directededge->classification(),
                                         directededge->use())) + 180.0f),
                 360)));
