@@ -13,7 +13,6 @@
 #include <valhalla/midgard/constants.h>
 #include <valhalla/baldr/json.h>
 #include <valhalla/baldr/geojson.h>
-#include <valhalla/baldr/errorcode_util.h>
 
 #include <prime_server/prime_server.hpp>
 
@@ -47,10 +46,34 @@ namespace {
         correlated.emplace_back(PathLocation::FromPtree(locations, *path_location));
       }
       catch (...) {
-        throw valhalla_exception_t{400, 420};
+        throw std::runtime_error("Failed to parse correlated location");
       }
     }while(++i);
     return correlated;
+  }
+
+  worker_t::result_t jsonify_error(uint64_t code, const std::string& status, const std::string& error, http_request_t::info_t& request_info, const boost::optional<std::string>& jsonp) {
+
+    //build up the json map
+    auto json_error = json::map({});
+    json_error->emplace("error", error);
+    json_error->emplace("status", status);
+    json_error->emplace("code", code);
+
+    //serialize it
+    std::stringstream ss;
+    if(jsonp)
+      ss << *jsonp << '(';
+    ss << *json_error;
+    if(jsonp)
+      ss << ')';
+
+    worker_t::result_t result{false};
+    http_response_t response(code, status, ss.str(), headers_t{CORS, jsonp ? JS_MIME : JSON_MIME});
+    response.from_info(request_info);
+    result.messages.emplace_back(response.to_string());
+
+    return result;
   }
 }
 
@@ -76,31 +99,6 @@ namespace valhalla {
 
     thor_worker_t::~thor_worker_t(){}
 
-    worker_t::result_t thor_worker_t::jsonify_error(const valhalla_exception_t& exception, http_request_t::info_t& request_info, const boost::optional<std::string>& extra) const {
-
-       //build up the json map
-      auto json_error = json::map({});
-      json_error->emplace("error", std::string(exception.error_code_message + (exception.extra ? *exception.extra : "")));
-      json_error->emplace("error_code", static_cast<uint64_t>(exception.error_code));
-      json_error->emplace("status", exception.status_code_body);
-      json_error->emplace("status_code", static_cast<uint64_t>(exception.status_code));
-
-      //serialize it
-      std::stringstream ss;
-      if(jsonp)
-        ss << *jsonp << '(';
-      ss << *json_error;
-      if(jsonp)
-        ss << ')';
-
-      worker_t::result_t result{false};
-      http_response_t response(exception.status_code, exception.status_code_body, ss.str(), headers_t{CORS, jsonp ? JS_MIME : JSON_MIME});
-      response.from_info(request_info);
-      result.messages.emplace_back(response.to_string());
-
-      return result;
-    }
-
     worker_t::result_t thor_worker_t::work(const std::list<zmq::message_t>& job, void* request_info) {
       //get time for start of request
       auto s = std::chrono::system_clock::now();
@@ -117,11 +115,11 @@ namespace valhalla {
         }
         catch(const std::exception& e) {
           valhalla::midgard::logging::Log("500::" + std::string(e.what()), " [ANALYTICS] ");
-          return jsonify_error({500, 499}, info, std::string(e.what()));
+          return jsonify_error(500, "Internal Server Error", e.what(), info, jsonp);
         }
         catch(...) {
           valhalla::midgard::logging::Log("500::non-std::exception", " [ANALYTICS] ");
-          return jsonify_error({500, 401}, info);
+          return jsonify_error(500, "Internal Server Error", "Failed to parse intermediate request format", info, jsonp);
         }
 
         // Initialize request - get the PathALgorithm to use
@@ -145,12 +143,12 @@ namespace valhalla {
           case TRACE_ATTRIBUTES:
             return trace_attributes(request, info);
           default:
-            throw valhalla_exception_t{400, 400}; //this should never happen
+            throw std::runtime_error("Unknown action"); //this should never happen
         }
       }
       catch(const std::exception& e) {
         valhalla::midgard::logging::Log("400::" + std::string(e.what()), " [ANALYTICS] ");
-        return jsonify_error({400, 499}, info, std::string(e.what()));
+        return jsonify_error(400, "Bad Request", e.what(), info, jsonp);
       }
     }
 
@@ -193,18 +191,18 @@ namespace valhalla {
       if(request_locations) {
         for(const auto& location : *request_locations) {
           try{ locations.push_back(baldr::Location::FromPtree(location.second)); }
-          catch (...) { throw valhalla_exception_t{400, 421}; }
+          catch (...) { throw std::runtime_error("Failed to parse location"); }
         }
         correlated = store_correlated_locations(request, locations);
       }//if we have a sources and targets request here we will divvy up the correlated amongst them
       else if(request_sources && request_targets) {
         for(const auto& s : *request_sources) {
           try{ locations.push_back(baldr::Location::FromPtree(s.second)); }
-          catch (...) { throw valhalla_exception_t{400, 422}; }
+          catch (...) { throw std::runtime_error("Failed to parse source"); }
         }
         for(const auto& t : *request_targets) {
           try{ locations.push_back(baldr::Location::FromPtree(t.second)); }
-          catch (...) { throw valhalla_exception_t{400, 423}; }
+          catch (...) { throw std::runtime_error("Failed to parse target"); }
         }
         correlated = store_correlated_locations(request, locations);
 
@@ -212,7 +210,7 @@ namespace valhalla {
         correlated_t.insert(correlated_t.begin(), correlated.begin() + request_sources->size(), correlated.end());
       }//we need something
       else
-        throw valhalla_exception_t{400, 410};
+        throw std::runtime_error("Insufficiently specified required parameter 'locations'");
 
       //type - 0: current, 1: depart, 2: arrive
       auto date_time_type = request.get_optional<int>("date_time.type");
@@ -236,12 +234,12 @@ namespace valhalla {
             coords.push_back(baldr::Location::FromPtree(pt.second).latlng_);
           }
           catch (...) {
-            throw valhalla_exception_t{400, 424};
+            throw std::runtime_error("Failed to parse shape");
           }
         }
       }//we need something
       else
-        throw valhalla_exception_t{400, 411};
+        throw std::runtime_error("Insufficiently specified required parameter 'shape'");
 
     }
 
@@ -251,7 +249,6 @@ namespace valhalla {
       bidir_astar.Clear();
       multi_modal_astar.Clear();
       locations.clear();
-      shape.clear();
       correlated.clear();
       correlated_s.clear();
       correlated_t.clear();

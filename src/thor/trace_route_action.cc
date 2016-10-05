@@ -40,7 +40,8 @@ namespace valhalla {
        try {
          matcher = matcher_factory_.Create(config);
        } catch (const std::invalid_argument& ex) {
-         return jsonify_error({400, 499}, request_info, std::string(ex.what()));
+         //return jsonify_error({400, 499}, request_info, std::string(ex.what()));
+         throw std::runtime_error(std::string(ex.what()));
         }
 
       std::vector<Measurement> sequence;
@@ -83,7 +84,7 @@ namespace valhalla {
       return result;
     }
 
-    std::list<valhalla::odin::TripPath> thor_worker_t::path_from_trace(std::vector<thor::PathInfo>path_edges, const std::string &costing, const boost::optional<int> &date_time_type, const std::string &request_str) {
+    /*std::list<valhalla::odin::TripPath> thor_worker_t::path_from_trace(std::vector<thor::PathInfo>path_edges, const std::string &costing, const boost::optional<int> &date_time_type, const std::string &request_str) {
       //get time for start of request
       auto s = std::chrono::system_clock::now();
       bool prior_is_node = false;
@@ -188,7 +189,7 @@ namespace valhalla {
       }
 
       return trippaths;
-    }
+    }*/
 
   }
 }
