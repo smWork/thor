@@ -108,7 +108,7 @@ namespace valhalla {
 
   thor::PathAlgorithm* thor_worker_t::get_path_algorithm(const std::string& routetype,
         const baldr::PathLocation& origin, const baldr::PathLocation& destination) {
-    if (routetype == "multimodal") {
+    if (routetype == "multimodal" || routetype == "transit") {
       return &multi_modal_astar;
     } else if (routetype == "bus") {
       // TODO - can we use bidirectional A*?
