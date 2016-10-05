@@ -29,13 +29,13 @@ namespace thor {
     const DirectedEdge* directededge;
     EdgeLabel pred;
     for (auto& res : matched_path) {
-      // Skip node graph types and edges that are the same as the prior edge
-      if (res.graphtype() == GraphType::kNode || res.graphid() == prior_edge) {
+      // Skip edges that are the same as the prior edge
+      if (res.edgeid() == prior_edge) {
         continue;
       }
 
       // Get the directed edge (TODO protect against invalid tile)
-      GraphId edge_id = res.graphid();
+      GraphId edge_id = res.edgeid();
       const GraphTile* tile = graphreader.GetGraphTile(edge_id);
       directededge = tile->directededge(edge_id);
 
