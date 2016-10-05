@@ -43,6 +43,7 @@ namespace valhalla {
 
       std::list<valhalla::odin::TripPath> path_arrive_by(std::vector<baldr::PathLocation>& correlated, const std::string &costing, const std::string &request_str);
       std::list<valhalla::odin::TripPath> path_depart_at(std::vector<baldr::PathLocation>& correlated, const std::string &costing, const boost::optional<int> &date_time_type, const std::string &request_str);
+      std::list<valhalla::odin::TripPath> path_from_trace(std::vector<thor::PathInfo>path_edges, const std::string &costing, const boost::optional<int> &date_time_type, const std::string &request_str);
 
       void parse_locations(const boost::property_tree::ptree& request);
       void parse_shape(const boost::property_tree::ptree& request);
