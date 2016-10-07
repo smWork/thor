@@ -42,7 +42,17 @@ namespace valhalla {
          throw std::runtime_error(std::string(ex.what()));
         }
 
-      std::vector<meili::MatchResult> results;
+       std::vector<Measurement> sequence;
+       for (const auto& coord: coords) {
+         sequence.emplace_back(coord, gps_accuracy, search_radius);
+       }
+
+       // Create the vector of matched path results
+       std::vector<meili::MatchResult> results;
+       for (size_t i = 0; i < sequence.size(); i++) {
+         results = (matcher->OfflineMatch(sequence));
+       }
+
       thor::MapMatchingRoute mapmatching_route;
       //Post-process the Path Locations to construct a vector of PathInfo and send to TripPathBuilder
       std::vector<PathInfo> path_edges = mapmatching_route.FormPath(matcher, results, mode_costing, mode);
