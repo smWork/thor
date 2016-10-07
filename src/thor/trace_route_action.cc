@@ -47,17 +47,7 @@ namespace valhalla {
       //Post-process the Path Locations to construct a vector of PathInfo and send to TripPathBuilder
       std::vector<PathInfo> path_edges = mapmatching_route.FormPath(matcher, results, mode_costing, mode);
 
-      //TODO: get path from trace & narrative from Odin
-     // path_from_trace(path_edges,,);
-
-      //TODO: serialize in Tyr
-
-      //turn it into json
-      auto json = baldr::json::map({});
-      auto id = request.get_optional<std::string>("id");
-      if(id)
-        json->emplace("id", *id);
-      std::stringstream stream; stream << *json;
+      //TODO: trippathbuilder
 
       //get processing time for thor
       auto e = std::chrono::system_clock::now();
