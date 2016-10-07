@@ -8,13 +8,14 @@
 #include <memory>
 
 #include <valhalla/baldr/graphid.h>
-#include <valhalla/baldr/graphreader.h>
 #include <valhalla/baldr/double_bucket_queue.h>
 #include <valhalla/sif/dynamiccost.h>
 #include <valhalla/sif/edgelabel.h>
 #include <valhalla/thor/edgestatus.h>
 #include <valhalla/thor/pathinfo.h>
+#include <valhalla/meili/map_matcher.h>
 #include <valhalla/meili/match_result.h>
+#include <valhalla/meili/match_route.h>
 
 
 namespace valhalla {
@@ -23,9 +24,10 @@ namespace thor {
 class MapMatchingRoute {
  public:
 
-  std::vector<PathInfo> FormPath(const std::vector<meili::MatchResult>& matched_path,
+  std::vector<PathInfo> FormPath(meili::MapMatcher* matcher,
+                                 const std::vector<meili::MatchResult>& results,
                                  const std::shared_ptr<sif::DynamicCost>* mode_costing,
-                                 baldr::GraphReader& graphreader, const sif::TravelMode mode);
+                                 const sif::TravelMode mode);
 
   protected:
 

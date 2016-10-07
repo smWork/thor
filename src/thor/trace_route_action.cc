@@ -32,9 +32,7 @@ namespace valhalla {
       //get time for start of request
       auto s = std::chrono::system_clock::now();
 
-      //TODO: call Meili for map matching to get a collection of pathLocation Edges
-      //TODO: convert shape to vector of Measurements (const midgard::PointLL& lnglat, float gps_accuracy, float search_radius)
-
+      // call Meili for map matching to get a collection of pathLocation Edges
       // Create a matcher
        MapMatcher* matcher;
        try {
@@ -44,21 +42,10 @@ namespace valhalla {
          throw std::runtime_error(std::string(ex.what()));
         }
 
-      std::vector<Measurement> sequence;
-      for (const auto& coord: coords) {
-        //TODO: need to change from hard-coding gps accuracy & search radius
-        sequence.emplace_back(coord, gps_accuracy, search_radius);
-      }
-
-      // Create the vector of matched path results
-      std::vector<MatchResult> matched_path;
-      for (size_t i = 0; i < sequence.size(); i++) {
-        matched_path = (matcher->OfflineMatch(sequence));
-      }
-
-      thor::MapMatchingRoute mapmatching;
+      std::vector<meili::MatchResult> results;
+      thor::MapMatchingRoute mapmatching_route;
       //Post-process the Path Locations to construct a vector of PathInfo and send to TripPathBuilder
-      std::vector<PathInfo> path_edges = mapmatching.FormPath(matched_path, mode_costing, reader, mode);
+      std::vector<PathInfo> path_edges = mapmatching_route.FormPath(matcher, results, mode_costing, mode);
 
       //TODO: get path from trace & narrative from Odin
      // path_from_trace(path_edges,,);

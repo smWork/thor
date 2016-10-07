@@ -1,7 +1,8 @@
 #include <vector>
 #include <algorithm>
-#include "thor/mapmatching_route.h"
 #include <valhalla/midgard/logging.h>
+
+#include "thor/mapmatching_route.h"
 
 using namespace valhalla::baldr;
 using namespace valhalla::sif;
@@ -13,9 +14,8 @@ namespace thor {
 
   // Form the path from the map-matching results. This path gets sent to
   // TripPathBuilder.
-  std::vector<PathInfo> MapMatchingRoute::FormPath(const std::vector<meili::MatchResult>& matched_path,
+  std::vector<PathInfo> MapMatchingRoute::FormPath(MapMatcher* matcher, const std::vector<meili::MatchResult>& results,
                                  const std::shared_ptr<sif::DynamicCost>* mode_costing,
-                                 baldr::GraphReader& graphreader,
                                  const sif::TravelMode mode) {
     // Set the mode and costing
     mode_ = mode;
@@ -28,36 +28,33 @@ namespace thor {
     const NodeInfo* nodeinfo;
     const DirectedEdge* directededge;
     EdgeLabel pred;
-    for (auto& res : matched_path) {
+
+    for (const auto& edge_segment: ConstructRoute(matcher->mapmatching(), results.begin(), results.end())) {
       // Skip edges that are the same as the prior edge
-      if (res.edgeid() == prior_edge) {
+      if (edge_segment.edgeid == prior_edge) {
         continue;
       }
 
+     // const auto& shape = edge_segment.Shape(matcher->graphreader());
+
       // Get the directed edge (TODO protect against invalid tile)
-      GraphId edge_id = res.edgeid();
-      const GraphTile* tile = graphreader.GetGraphTile(edge_id);
+      GraphId edge_id = edge_segment.edgeid;
+      const GraphTile* tile = matcher->graphreader().GetGraphTile(edge_id);
       directededge = tile->directededge(edge_id);
 
-      // Check if connected to prior edge
-      if (prior_edge.Is_Valid()) {
-        if (graphreader.GetOpposingEdge(edge_id)->endnode() != prior_node) {
-          LOG_ERROR("Matched Path is not connected");
-          return {};
-        }
+      // EdgeSegment ensures valid edge, so no check is needed.
 
-        // Get transition cost
-        elapsed_time += costing->TransitionCost(directededge, nodeinfo, pred).secs;
-      }
+      // Get transition cost
+      elapsed_time += costing->TransitionCost(directededge, nodeinfo, pred).secs;
 
-      // Get time along the edge. TODO - how do we handle partial distance along
-      // the first and last edge?
-      elapsed_time += costing->EdgeCost(directededge, nodeinfo->density()).secs;
+      // Get time along the edge, handling partial distance along
+      // the first and last edge
+      elapsed_time += costing->EdgeCost(directededge, nodeinfo->density()).secs * (edge_segment.target - edge_segment.source);
 
       // Update the prior_edge and nodeinfo. TODO (protect against invalid tile)
       prior_edge = edge_id;
       prior_node = directededge->endnode();
-      const GraphTile* end_tile = graphreader.GetGraphTile(prior_node);
+      const GraphTile* end_tile = matcher->graphreader().GetGraphTile(prior_node);
       nodeinfo = end_tile->node(prior_node);
 
       // Create a predecessor EdgeLabel (for transition costing)
