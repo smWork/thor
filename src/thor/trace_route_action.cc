@@ -4,12 +4,15 @@ using namespace prime_server;
 
 #include <valhalla/midgard/logging.h>
 #include <valhalla/baldr/geojson.h>
+#include <valhalla/baldr/pathlocation.h>
 #include <valhalla/meili/map_matcher_factory.h>
 #include <valhalla/meili/map_matcher.h>
+#include <valhalla/proto/trippath.pb.h>
 
 
 #include "thor/service.h"
 #include "thor/mapmatching_route.h"
+#include "thor/trippathbuilder.h"
 
 using namespace valhalla;
 using namespace valhalla::meili;
@@ -57,7 +60,14 @@ namespace valhalla {
       //Post-process the Path Locations to construct a vector of PathInfo and send to TripPathBuilder
       std::vector<PathInfo> path_edges = mapmatching_route.FormPath(matcher, results, mode_costing, mode);
 
-      //TODO: trippathbuilder
+      // TODO: update as needed
+      baldr::PathLocation origin(shape.front());
+      baldr::PathLocation destination(shape.back());
+      std::vector<baldr::PathLocation> through_loc;
+      auto trip_path = thor::TripPathBuilder::Build(matcher->graphreader(), mode_costing,
+                                                    path_edges, origin,
+                                                    destination, through_loc);
+      result.messages.emplace_back(trip_path.SerializeAsString());
 
       //get processing time for thor
       auto e = std::chrono::system_clock::now();
