@@ -231,7 +231,7 @@ namespace valhalla {
       if(request_shape) {
         for(const auto& pt : *request_shape) {
           try{
-            coords.push_back(baldr::Location::FromPtree(pt.second).latlng_);
+            shape.push_back(baldr::Location::FromPtree(pt.second).latlng_);
           }
           catch (...) {
             throw std::runtime_error("Failed to parse shape");

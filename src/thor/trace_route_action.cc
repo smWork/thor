@@ -43,7 +43,7 @@ namespace valhalla {
         }
 
        std::vector<Measurement> sequence;
-       for (const auto& coord: coords) {
+       for (const auto& coord: shape) {
          sequence.emplace_back(coord, gps_accuracy, search_radius);
        }
 

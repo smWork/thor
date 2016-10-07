@@ -63,7 +63,6 @@ namespace valhalla {
       std::vector<baldr::Location> sources;
       std::vector<baldr::Location> targets;
       std::list<midgard::PointLL> shape;
-      std::vector<midgard::PointLL> coords;
       std::vector<baldr::PathLocation> correlated;
       std::vector<baldr::PathLocation> correlated_s;
       std::vector<baldr::PathLocation> correlated_t;
