@@ -52,7 +52,7 @@ namespace valhalla {
       prime_server::worker_t::result_t matrix(ACTION_TYPE matrix_type, const boost::property_tree::ptree &request, prime_server::http_request_t::info_t& request_info);
       prime_server::worker_t::result_t optimized_route(const boost::property_tree::ptree& request, const std::string &request_str, const bool header_dnt);
       prime_server::worker_t::result_t isochrone(const boost::property_tree::ptree &request, prime_server::http_request_t::info_t& request_info);
-      prime_server::worker_t::result_t trace_route(const boost::property_tree::ptree &request, prime_server::http_request_t::info_t& request_info);
+      prime_server::worker_t::result_t trace_route(const boost::property_tree::ptree &request, const std::string &request_str);
       prime_server::worker_t::result_t trace_attributes(const boost::property_tree::ptree &request, prime_server::http_request_t::info_t& request_info);
 
 

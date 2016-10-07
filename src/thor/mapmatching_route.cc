@@ -45,7 +45,8 @@ namespace thor {
       // EdgeSegment ensures valid edge, so no check is needed.
 
       // Get transition cost
-      elapsed_time += costing->TransitionCost(directededge, nodeinfo, pred).secs;
+      //GDG
+//      elapsed_time += costing->TransitionCost(directededge, nodeinfo, pred).secs;
 
       // Get time along the edge, handling partial distance along
       // the first and last edge
