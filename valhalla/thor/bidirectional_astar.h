@@ -70,6 +70,9 @@ class BidirectionalAStar : public PathAlgorithm {
   // Current travel mode
   sif::TravelMode mode_;
 
+  // Current travel type
+  uint8_t travel_type_;
+
   // Hierarchy limits
   std::vector<sif::HierarchyLimits> hierarchy_limits_forward_;
   std::vector<sif::HierarchyLimits> hierarchy_limits_reverse_;

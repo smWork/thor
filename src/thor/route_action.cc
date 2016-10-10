@@ -108,7 +108,7 @@ namespace valhalla {
 
   thor::PathAlgorithm* thor_worker_t::get_path_algorithm(const std::string& routetype,
         const baldr::PathLocation& origin, const baldr::PathLocation& destination) {
-    if (routetype == "multimodal") {
+    if (routetype == "multimodal" || routetype == "transit") {
       return &multi_modal_astar;
     } else if (routetype == "bus") {
       // TODO - can we use bidirectional A*?
@@ -227,8 +227,8 @@ namespace valhalla {
             last_break_dest.date_time_ = origin_date_time;
 
           // Form output information based on path edges
-          auto trip_path = thor::TripPathBuilder::Build(reader, path_edges,
-                              origin, last_break_dest, through_loc);
+          auto trip_path = thor::TripPathBuilder::Build(reader, mode_costing,
+                       path_edges, origin, last_break_dest, through_loc);
 
           if (origin.date_time_)
             origin_date_time = *origin.date_time_;
@@ -332,8 +332,8 @@ namespace valhalla {
       if (destination.stoptype_ == Location::StopType::BREAK ||
           path_location == --correlated.cend()) {
           // Form output information based on path edges
-          auto trip_path = thor::TripPathBuilder::Build(reader, path_edges,
-                                                        last_break_origin, destination, through_loc);
+          auto trip_path = thor::TripPathBuilder::Build(reader, mode_costing,
+                   path_edges, last_break_origin, destination, through_loc);
 
           if (date_time_type) {
             origin_date_time = *last_break_origin.date_time_;

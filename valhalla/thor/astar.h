@@ -67,6 +67,9 @@ class AStarPathAlgorithm : public PathAlgorithm {
   // Current travel mode
   sif::TravelMode mode_;
 
+  // Current travel type
+  uint8_t travel_type_;
+
   // Tile creation date
   uint32_t tile_creation_date_;
 
