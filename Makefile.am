@@ -56,7 +56,6 @@ nobase_include_HEADERS = \
 libvalhalla_thor_la_SOURCES = \
 	src/thor/astar.cc \
 	src/thor/astarheuristic.cc \
-	src/thor/attributes_action.cc \
 	src/thor/bidirectional_astar.cc \
 	src/thor/costmatrix.cc \
 	src/thor/edgestatus.cc \
@@ -67,6 +66,7 @@ libvalhalla_thor_la_SOURCES = \
 	src/thor/optimized_route_action.cc \
 	src/thor/optimizer.cc \
 	src/thor/route_action.cc \
+        src/thor/trace_attributes_action.cc \
 	src/thor/trippathbuilder.cc \
 	src/thor/service.cc \
 	src/thor/trafficalgorithm.cc
