@@ -72,14 +72,14 @@ namespace valhalla {
 
     thor_worker_t::~thor_worker_t(){}
 
-    worker_t::result_t thor_worker_t::jsonify_error(const valhalla_exception_t& exception, http_request_t::info_t& request_info, const boost::optional<std::string>& extra) const {
+    worker_t::result_t thor_worker_t::jsonify_error(const valhalla_exception_t& exception, http_request_t::info_t& request_info) const {
 
        //build up the json map
       auto json_error = json::map({});
-      json_error->emplace("error", std::string(exception.error_code_message + (exception.extra ? *exception.extra : "")));
-      json_error->emplace("error_code", static_cast<uint64_t>(exception.error_code));
       json_error->emplace("status", exception.status_code_body);
       json_error->emplace("status_code", static_cast<uint64_t>(exception.status_code));
+      json_error->emplace("error", std::string(exception.error_code_message));
+      json_error->emplace("error_code", static_cast<uint64_t>(exception.error_code));
 
       //serialize it
       std::stringstream ss;
@@ -113,7 +113,7 @@ namespace valhalla {
         }
         catch(const std::exception& e) {
           valhalla::midgard::logging::Log("500::" + std::string(e.what()), " [ANALYTICS] ");
-          return jsonify_error({500, 499}, info, std::string(e.what()));
+          return jsonify_error({500, 499, std::string(e.what())}, info);
         }
         catch(...) {
           valhalla::midgard::logging::Log("500::non-std::exception", " [ANALYTICS] ");
@@ -144,7 +144,7 @@ namespace valhalla {
       }
       catch(const std::exception& e) {
         valhalla::midgard::logging::Log("400::" + std::string(e.what()), " [ANALYTICS] ");
-        return jsonify_error({400, 499}, info, std::string(e.what()));
+        return jsonify_error({400, 499, std::string(e.what())}, info);
       }
     }
 
