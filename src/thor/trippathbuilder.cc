@@ -984,7 +984,7 @@ TripPath_Edge* TripPathBuilder::AddTripEdge(const uint32_t idx,
   if (directededge->use() == Use::kCuldesac)
     trip_edge->set_culdesac(true);
 
-  if (directededge->use() == Use::kFootway)
+  if ((directededge->use() == Use::kFootway) || (directededge->use() == Use::kSidewalk))
     trip_edge->set_footway(true);
 
   if (directededge->use() == Use::kSteps)
