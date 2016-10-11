@@ -9,6 +9,7 @@
 #include <valhalla/baldr/pathlocation.h>
 #include <valhalla/baldr/graphreader.h>
 #include <valhalla/baldr/location.h>
+#include <valhalla/baldr/errorcode_util.h>
 #include <valhalla/sif/costfactory.h>
 #include <valhalla/baldr/errorcode_util.h>
 #include <valhalla/thor/bidirectional_astar.h>
@@ -35,6 +36,7 @@ namespace valhalla {
 
      protected:
 
+      prime_server::worker_t::result_t jsonify_error(const baldr::valhalla_exception_t& exception, prime_server::http_request_t::info_t& request_info) const;
       void update_origin(baldr::PathLocation& origin, bool prior_is_node, const baldr::GraphId& through_edge);
       void get_path(PathAlgorithm* path_algorithm, baldr::PathLocation& origin, baldr::PathLocation& destination, std::vector<thor::PathInfo>& path_edges);
       valhalla::sif::cost_ptr_t get_costing(const boost::property_tree::ptree& request, const std::string& costing);
@@ -54,7 +56,6 @@ namespace valhalla {
       prime_server::worker_t::result_t isochrone(const boost::property_tree::ptree &request, prime_server::http_request_t::info_t& request_info);
       prime_server::worker_t::result_t trace_route(const boost::property_tree::ptree &request, const std::string &request_str);
       prime_server::worker_t::result_t trace_attributes(const boost::property_tree::ptree &request, prime_server::http_request_t::info_t& request_info);
-
 
       valhalla::sif::TravelMode mode;
       boost::property_tree::ptree config;

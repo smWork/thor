@@ -1,6 +1,7 @@
 #include <map>
 #include <algorithm>
 #include <valhalla/baldr/datetime.h>
+#include <valhalla/baldr/errorcode_util.h>
 #include <valhalla/midgard/logging.h>
 #include "thor/multimodal.h"
 
@@ -530,7 +531,7 @@ bool MultiModalPathAlgorithm::CanReachDestination(const PathLocation& destinatio
     uint32_t predindex = adjlist.pop();
     if (predindex == kInvalidLabel) {
       // Throw an exception so the message is returned in the service
-      throw std::runtime_error("Cannot reach destination - too far from a transit stop");
+      throw valhalla_exception_t{400, 440};
       return false;
     }
 
