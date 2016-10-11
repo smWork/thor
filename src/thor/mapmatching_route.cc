@@ -50,7 +50,8 @@ namespace thor {
 
       // Get time along the edge, handling partial distance along
       // the first and last edge
-      elapsed_time += costing->EdgeCost(directededge, nodeinfo->density()).secs * (edge_segment.target - edge_segment.source);
+      //GDG
+//      elapsed_time += costing->EdgeCost(directededge, nodeinfo->density()).secs * (edge_segment.target - edge_segment.source);
 
       // Update the prior_edge and nodeinfo. TODO (protect against invalid tile)
       prior_edge = edge_id;
