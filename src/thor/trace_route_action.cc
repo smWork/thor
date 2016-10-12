@@ -64,9 +64,9 @@ worker_t::result_t thor_worker_t::trace_route(
   //Post-process the Path Locations to construct a vector of PathInfo and send to TripPathBuilder
   std::vector<PathInfo> path_edges = mapmatching_route.FormPath(matcher, results, mode_costing, mode);
 
-  // TODO: update as needed
-  baldr::PathLocation origin(shape.front());
-  baldr::PathLocation destination(shape.back());
+  // Set origin and destination from map matching results
+  baldr::PathLocation origin = matcher->mapmatching().state(results.front().stateid()).candidate();
+  baldr::PathLocation destination = matcher->mapmatching().state(results.back().stateid()).candidate();
   std::vector<baldr::PathLocation> through_loc;
   auto trip_path = thor::TripPathBuilder::Build(matcher->graphreader(), mode_costing,
                                                 path_edges, origin,
