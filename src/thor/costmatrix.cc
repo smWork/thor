@@ -193,8 +193,18 @@ void CostMatrix::Initialize(
   }
 
   // Set the remaining number of sources and targets
-  remaining_sources_ = all_the_same ? 0 : source_count_;
-  remaining_targets_ = all_the_same ? 0 : target_count_;
+   remaining_sources_ = 0;
+   for (auto s : source_status_) {
+     if (!s.remaining_locations.empty()) {
+       remaining_sources_++;
+     }
+   }
+   remaining_targets_ = 0;
+   for (auto t : target_status_) {
+     if (!t.remaining_locations.empty()) {
+       remaining_targets_++;
+     }
+   }
 }
 
 // Iterate the forward search from the source/origin location.
