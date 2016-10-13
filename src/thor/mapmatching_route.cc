@@ -45,6 +45,7 @@ std::vector<PathInfo> MapMatchingRoute::FormPath(
       const GraphTile* tile = matcher->graphreader().GetGraphTile(edge_id);
       directededge = tile->directededge(edge_id);
 
+      // TODO: slight difference in time between route and trace_route
       if (directededge && nodeinfo) {
         // Get transition cost
         elapsed_time += costing->TransitionCost(directededge, nodeinfo, pred)
