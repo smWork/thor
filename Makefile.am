@@ -71,7 +71,7 @@ libvalhalla_thor_la_SOURCES = \
 	src/thor/optimized_route_action.cc \
 	src/thor/optimizer.cc \
 	src/thor/route_action.cc \
-        src/thor/trace_attributes_action.cc \
+	src/thor/trace_attributes_action.cc \
 	src/thor/trippathbuilder.cc \
 	src/thor/service.cc \
 	src/thor/trafficalgorithm.cc
