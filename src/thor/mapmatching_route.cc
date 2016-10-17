@@ -46,7 +46,7 @@ namespace thor {
 
       // Get transition cost
       //GDG
-//      elapsed_time += costing->TransitionCost(directededge, nodeinfo, pred).secs;
+      elapsed_time += costing->TransitionCost(directededge, nodeinfo, pred).secs;
 
       // Get time along the edge, handling partial distance along
       // the first and last edge

@@ -59,6 +59,10 @@ worker_t::result_t thor_worker_t::trace_route(
   for (size_t i = 0; i < sequence.size(); i++) {
     results = (matcher->OfflineMatch(sequence));
   }
+  LOG_INFO("Matched Results from input trace: ");
+  for(const auto& result : results) {
+    LOG_INFO(std::to_string(result.lnglat().first) + ", " + std::to_string(result.lnglat().second));
+  }
 
   thor::MapMatchingRoute mapmatching_route;
   //Post-process the Path Locations to construct a vector of PathInfo and send to TripPathBuilder

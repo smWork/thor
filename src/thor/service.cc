@@ -140,10 +140,9 @@ namespace valhalla {
           case ROUTE:
           case VIAROUTE:
             return route(request, request_str, request.get_optional<int>("date_time.type"), info.do_not_track);
+          case TRACE_ATTRIBUTES:
           case TRACE_ROUTE:
             return trace_route(request, request_str);
-          case TRACE_ATTRIBUTES:
-            return trace_attributes(request, info);
           default:
             throw valhalla_exception_t{400, 400}; //this should never happen
         }
