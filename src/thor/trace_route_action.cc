@@ -2,9 +2,12 @@
 
 using namespace prime_server;
 
+#include <exception>
+
 #include <valhalla/midgard/logging.h>
 #include <valhalla/baldr/geojson.h>
 #include <valhalla/baldr/pathlocation.h>
+#include <valhalla/baldr/errorcode_util.h>
 #include <valhalla/meili/map_matcher_factory.h>
 #include <valhalla/meili/map_matcher.h>
 #include <valhalla/proto/trippath.pb.h>
@@ -33,13 +36,13 @@ worker_t::result_t thor_worker_t::trace_route(
   parse_shape(request);
   parse_costing(request);
 
-  worker_t::result_t result{true};
+  worker_t::result_t result { true };
   //get time for start of request
   auto s = std::chrono::system_clock::now();
   // Forward the original request
   result.messages.emplace_back(request_str);
 
-  // call Meili for map matching to get a collection of pathLocation Edges
+  // Call Meili for map matching to get a collection of pathLocation Edges
   // Create a matcher
   MapMatcher* matcher;
   try {
@@ -50,7 +53,7 @@ worker_t::result_t thor_worker_t::trace_route(
   }
 
   std::vector<Measurement> sequence;
-  for (const auto& coord: shape) {
+  for (const auto& coord : shape) {
     sequence.emplace_back(coord, gps_accuracy, search_radius);
   }
 
@@ -64,20 +67,41 @@ worker_t::result_t thor_worker_t::trace_route(
     LOG_INFO(std::to_string(result.lnglat().first) + ", " + std::to_string(result.lnglat().second));
   }
 
+  // Form the path edges based on the matched points
   thor::MapMatchingRoute mapmatching_route;
-  //Post-process the Path Locations to construct a vector of PathInfo and send to TripPathBuilder
-  std::vector<PathInfo> path_edges = mapmatching_route.FormPath(matcher, results, mode_costing, mode);
+  std::vector<PathInfo> path_edges = mapmatching_route.FormPath(matcher,
+                                                                results,
+                                                                mode_costing,
+                                                                mode);
 
   // Set origin and destination from map matching results
-  baldr::PathLocation origin = matcher->mapmatching().state(results.front().stateid()).candidate();
-  baldr::PathLocation destination = matcher->mapmatching().state(results.back().stateid()).candidate();
-  std::vector<baldr::PathLocation> through_loc;
-  auto trip_path = thor::TripPathBuilder::Build(matcher->graphreader(), mode_costing,
-                                                path_edges, origin,
-                                                destination, through_loc);
-  result.messages.emplace_back(trip_path.SerializeAsString());
+  auto first_result_with_state = std::find_if(
+      results.begin(), results.end(),
+      [](const meili::MatchResult& result) {return result.HasState();});
+  auto last_result_with_state = std::find_if(
+      results.rbegin(), results.rend(),
+      [](const meili::MatchResult& result) {return result.HasState();});
+  if ((first_result_with_state != results.end())
+      && (last_result_with_state != results.rend())) {
+    baldr::PathLocation origin = matcher->mapmatching().state(
+        first_result_with_state->stateid()).candidate();
+    baldr::PathLocation destination = matcher->mapmatching().state(
+        last_result_with_state->stateid()).candidate();
 
-  //get processing time for thor
+    // Empty through location list
+    std::vector<baldr::PathLocation> through_loc;
+
+    // Form the trip path based on mode costing, origin, destination, and path edges
+    auto trip_path = thor::TripPathBuilder::Build(matcher->graphreader(),
+                                                  mode_costing, path_edges,
+                                                  origin, destination,
+                                                  through_loc);
+    result.messages.emplace_back(trip_path.SerializeAsString());
+  } else {
+    throw baldr::valhalla_exception_t { 400, 442 };
+  }
+
+  // Get processing time for thor
   auto e = std::chrono::system_clock::now();
   std::chrono::duration<float, std::milli> elapsed_time = e - s;
   return result;
