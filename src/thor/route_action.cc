@@ -110,11 +110,6 @@ namespace valhalla {
         const baldr::PathLocation& origin, const baldr::PathLocation& destination) {
     if (routetype == "multimodal" || routetype == "transit") {
       return &multi_modal_astar;
-    } else if (routetype == "bus") {
-      // TODO - can we use bidirectional A*?
-      return &astar;
-    } else if (routetype == "pedestrian") {
-      return &bidir_astar;
     } else {
       // Use A* if any origin and destination edges are the same - otherwise
       // use bidirectional A*. Bidirectional A* does not handle trivial cases
