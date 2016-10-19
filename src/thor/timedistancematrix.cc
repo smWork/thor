@@ -6,6 +6,23 @@
 using namespace valhalla::baldr;
 using namespace valhalla::sif;
 
+namespace {
+static bool IsTrivial(const GraphId& edgeid,
+                              const PathLocation& origin,
+                              const PathLocation& destination) {
+  for (const auto& destination_edge : destination.edges) {
+    if (destination_edge.id == edgeid) {
+      for (const auto& origin_edge : origin.edges) {
+        if (origin_edge.id == edgeid &&
+            origin_edge.dist <= destination_edge.dist) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+}
 namespace valhalla {
 namespace thor {
 
@@ -50,8 +67,12 @@ std::vector<TimeDistance> TimeDistanceMatrix::OneToMany(
   // factor (needed for setting the origin).
   astarheuristic_.Init(locations[origin_index].latlng_, 0.0f);
   uint32_t bucketsize = costing->UnitSize();
-  adjacencylist_.reset(new AdjacencyList(0.0f, initial_cost_threshold_,
-                                         bucketsize));
+  // Set up lambda to get sort costs
+  const auto edgecost = [this](const uint32_t label) {
+    return edgelabels_[label].sortcost();
+  };
+  adjacencylist_.reset(new DoubleBucketQueue(0.0f, initial_cost_threshold_,
+                                             bucketsize, edgecost));
   edgestatus_.reset(new EdgeStatus());
 
   // Initialize the origin and destination locations
@@ -64,7 +85,7 @@ std::vector<TimeDistance> TimeDistanceMatrix::OneToMany(
   while (true) {
     // Get next element from adjacency list. Check that it is valid. An
     // invalid label indicates there are no edges that can be expanded.
-    uint32_t predindex = adjacencylist_->Remove();
+    uint32_t predindex = adjacencylist_->pop();
     if (predindex == kInvalidLabel) {
       // Can not expand any further...
       return FormTimeDistanceMatrix();
@@ -151,7 +172,7 @@ std::vector<TimeDistance> TimeDistanceMatrix::OneToMany(
           float newsortcost = oldsortcost - dc;
           edgelabels_[idx].Update(predindex, newcost, newsortcost,
                                   distance, 0, 0);
-          adjacencylist_->DecreaseCost(idx, newsortcost, oldsortcost);
+          adjacencylist_->decrease(idx, newsortcost, oldsortcost);
         }
         continue;
       }
@@ -164,6 +185,13 @@ std::vector<TimeDistance> TimeDistanceMatrix::OneToMany(
     }
   }
   return {};      // Should never get here
+}
+
+void TimeDistanceMatrix::AddToAdjacencyList(const baldr::GraphId& edgeid,
+                                            const float sortcost) {
+  uint32_t idx = edgelabels_.size();
+  adjacencylist_->add(idx, sortcost);
+  edgestatus_->Set(edgeid, EdgeSet::kTemporary, idx);
 }
 
 // Many to one time and distance cost matrix. Computes time and distance
@@ -185,8 +213,11 @@ std::vector<TimeDistance> TimeDistanceMatrix::ManyToOne(
   // factor (needed for setting the origin).
   astarheuristic_.Init(locations[dest_index].latlng_, 0.0f);
   uint32_t bucketsize = costing->UnitSize();
-  adjacencylist_.reset(new AdjacencyList(0.0f, initial_cost_threshold_,
-                                         bucketsize));
+  const auto edgecost = [this](const uint32_t label) {
+    return edgelabels_[label].sortcost();
+  };
+  adjacencylist_.reset(new DoubleBucketQueue(0.0f, initial_cost_threshold_,
+                                         bucketsize, edgecost));
   edgestatus_.reset(new EdgeStatus());
 
   // Initialize the origin and destination locations
@@ -199,7 +230,7 @@ std::vector<TimeDistance> TimeDistanceMatrix::ManyToOne(
   while (true) {
     // Get next element from adjacency list. Check that it is valid. An
     // invalid label indicates there are no edges that can be expanded.
-    uint32_t predindex = adjacencylist_->Remove();
+    uint32_t predindex = adjacencylist_->pop();
     if (predindex == kInvalidLabel) {
       // Can not expand any further...
       return FormTimeDistanceMatrix();
@@ -296,7 +327,7 @@ std::vector<TimeDistance> TimeDistanceMatrix::ManyToOne(
           float newsortcost = oldsortcost - dc;
           edgelabels_[idx].Update(predindex, newcost, newsortcost,
                                   distance, 0, 0);
-          adjacencylist_->DecreaseCost(idx, newsortcost, oldsortcost);
+          adjacencylist_->decrease(idx, newsortcost, oldsortcost);
         }
         continue;
       }
@@ -362,7 +393,7 @@ void TimeDistanceMatrix::SetOriginOneToMany(GraphReader& graphreader,
     // Add EdgeLabel to the adjacency list (but do not set its status).
     // Set the predecessor edge index to invalid to indicate the origin
     // of the path. Set the origin flag
-    adjacencylist_->Add(edgelabels_.size(), cost.cost);
+    adjacencylist_->add(edgelabels_.size(), cost.cost);
     EdgeLabel edge_label(kInvalidLabel, edgeid, directededge, cost,
             cost.cost, 0.0f, directededge->restrictions(),
             directededge->opp_local_idx(), mode_, d);
@@ -406,7 +437,7 @@ void TimeDistanceMatrix::SetOriginManyToOne(GraphReader& graphreader,
     // Set the predecessor edge index to invalid to indicate the origin
     // of the path. Set the origin flag.
     // TODO - restrictions?
-    adjacencylist_->Add(edgelabels_.size(), cost.cost);
+    adjacencylist_->add(edgelabels_.size(), cost.cost);
     EdgeLabel edge_label(kInvalidLabel, opp_edge_id, opp_dir_edge, cost,
             cost.cost, 0.0f, 0, opp_dir_edge->opp_local_idx(), mode_, d);
     edge_label.set_origin();

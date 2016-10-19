@@ -11,6 +11,7 @@ using namespace prime_server;
 
 #include "thor/service.h"
 #include "thor/costmatrix.h"
+#include "thor/timedistancematrix.h"
 
 using namespace valhalla;
 using namespace valhalla::midgard;
@@ -124,10 +125,16 @@ namespace valhalla {
         distance_scale = kMilePerMeter;
 
       json::MapPtr json;
-      //do the real work
-      thor::CostMatrix costmatrix;
-      json = serialize(matrix_type, request.get_optional<std::string>("id"), correlated_s, correlated_t,
-        costmatrix.SourceToTarget(correlated_s, correlated_t, reader, mode_costing, mode), units, distance_scale);
+      if (action == thor_worker_t::ONE_TO_MANY ){
+        thor::TimeDistanceMatrix timedistance_matrix;
+        json = serialize(matrix_type, request.get_optional<std::string>("id"), correlated_s, correlated_t,
+          timedistance_matrix.OneToMany(0, correlated_t, reader, mode_costing, mode), units, distance_scale);
+      } else {
+        //do the real work
+        thor::CostMatrix costmatrix;
+        json = serialize(matrix_type, request.get_optional<std::string>("id"), correlated_s, correlated_t,
+          costmatrix.SourceToTarget(correlated_s, correlated_t, reader, mode_costing, mode), units, distance_scale);
+      }
 
       //jsonp callback if need be
       std::ostringstream stream;
