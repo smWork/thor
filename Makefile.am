@@ -52,7 +52,7 @@ nobase_include_HEADERS = \
 	valhalla/thor/edgestatus.h \
 	valhalla/thor/isochrone.h \
 	valhalla/thor/optimizer.h \
-        valhalla/thor/mapmatching_route.h \
+	valhalla/thor/mapmatching_route.h \
 	valhalla/thor/multimodal.h \
 	valhalla/thor/pathalgorithm.h \
 	valhalla/thor/pathinfo.h \
@@ -67,14 +67,14 @@ libvalhalla_thor_la_SOURCES = \
 	src/thor/edgestatus.cc \
 	src/thor/isochrone.cc \
 	src/thor/isochrone_action.cc \
-        src/thor/mapmatching_route.cc \
+	src/thor/mapmatching_route.cc \
 	src/thor/matrix_action.cc \
 	src/thor/multimodal.cc \
 	src/thor/optimized_route_action.cc \
 	src/thor/optimizer.cc \
 	src/thor/route_action.cc \
-        src/thor/trace_attributes_action.cc \
-        src/thor/trace_route_action.cc \
+	src/thor/trace_attributes_action.cc \
+	src/thor/trace_route_action.cc \
 	src/thor/trippathbuilder.cc \
 	src/thor/service.cc \
 	src/thor/trafficalgorithm.cc
