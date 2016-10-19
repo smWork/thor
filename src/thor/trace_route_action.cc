@@ -2,8 +2,6 @@
 
 using namespace prime_server;
 
-#include <exception>
-
 #include <valhalla/midgard/logging.h>
 #include <valhalla/baldr/geojson.h>
 #include <valhalla/baldr/pathlocation.h>
