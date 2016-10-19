@@ -58,7 +58,7 @@ nobase_include_HEADERS = \
 	valhalla/thor/pathinfo.h \
 	valhalla/thor/trippathbuilder.h \
 	valhalla/thor/service.h \
-	valhalla/thor/trafficalgorithm.h
+	valhalla/thor/trafficalgorithm.h \
 	valhalla/thor/timedistancematrix.h
 libvalhalla_thor_la_SOURCES = \
 	src/thor/astar.cc \
