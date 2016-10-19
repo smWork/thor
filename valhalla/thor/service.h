@@ -77,7 +77,6 @@ namespace valhalla {
       Isochrone isochrone_gen;
       float long_request;
       boost::optional<int> date_time_type;
-      valhalla::meili::MapMatcherFactory matcher_factory_;
       float gps_accuracy;
       float search_radius;
     };

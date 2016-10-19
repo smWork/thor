@@ -61,7 +61,6 @@ namespace valhalla {
       mode(valhalla::sif::TravelMode::kPedestrian),
       config(config), reader(config.get_child("mjolnir")),
       long_request(config.get<float>("thor.logging.long_request")),
-      matcher_factory_(config),
       gps_accuracy(config.get<float>("meili.default.gps_accuracy")),
       search_radius(config.get<float>("meili.default.search_radius")){
       // Register edge/node costing methods

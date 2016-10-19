@@ -41,10 +41,11 @@ worker_t::result_t thor_worker_t::trace_route(
   result.messages.emplace_back(request_str);
 
   // Call Meili for map matching to get a collection of pathLocation Edges
+  meili::MapMatcherFactory factory(config);
   // Create a matcher
   MapMatcher* matcher;
   try {
-    matcher = matcher_factory_.Create(config);
+    matcher = factory.Create(config);
   } catch (const std::invalid_argument& ex) {
     //return jsonify_error({400, 499}, request_info, std::string(ex.what()));
     throw std::runtime_error(std::string(ex.what()));
@@ -109,6 +110,8 @@ worker_t::result_t thor_worker_t::trace_route(
 //    LOG_WARN("thor::route trip_path exceeded threshold::"+ request_str);
 //    midgard::logging::Log("valhalla_thor_long_request_route", " [ANALYTICS] ");
 //  }
+  delete matcher;
+
   return result;
 }
 
