@@ -227,20 +227,16 @@ namespace valhalla {
 
     void thor_worker_t::parse_shape(const boost::property_tree::ptree& request) {
       //we require locations
-      auto request_shape = request.get_child_optional("shape");
+      auto request_shape = request.get_child("shape");
 
-      if(request_shape) {
-        for(const auto& pt : *request_shape) {
-          try{
-            shape.push_back(baldr::Location::FromPtree(pt.second).latlng_);
-          }
-          catch (...) {
-            throw std::runtime_error("Failed to parse shape");
-          }
+      for(const auto& pt : request_shape) {
+        try{
+          shape.push_back(baldr::Location::FromPtree(pt.second).latlng_);
         }
-      }//we need something
-      else
-        throw std::runtime_error("Insufficiently specified required parameter 'shape'");
+        catch (...) {
+          throw std::runtime_error("Failed to parse shape");
+        }
+      }
 
     }
 
