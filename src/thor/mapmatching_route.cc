@@ -48,14 +48,21 @@ std::vector<PathInfo> MapMatchingRoute::FormPath(
       // TODO: slight difference in time between route and trace_route
       if (nodeinfo) {
         // Get transition cost
-        elapsed_time += costing->TransitionCost(directededge, nodeinfo, pred).secs;
+        elapsed_time += costing->TransitionCost(directededge, nodeinfo, pred)
+                .secs;
+
+        // Get time along the edge, handling partial distance along
+        // the first and last edge
+        elapsed_time += costing->EdgeCost(directededge, nodeinfo->density()).secs
+            * (edge_segment.target - edge_segment.source);
+      } else {
+        // Get time along the edge, handling partial distance along
+        // the first and last edge
+        elapsed_time += costing->EdgeCost(
+            directededge, matcher->graphreader().GetEdgeDensity(edge_id)).secs
+                * (edge_segment.target - edge_segment.source);
       }
 
-      // Get time along the edge, handling partial distance along
-      // the first and last edge
-      elapsed_time += costing->EdgeCost(
-          directededge, matcher->graphreader().GetEdgeDensity(edge_id)).secs
-              * (edge_segment.target - edge_segment.source);
 
       // Update the prior_edge and nodeinfo. TODO (protect against invalid tile)
       prior_edge = edge_id;
