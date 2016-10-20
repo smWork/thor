@@ -59,7 +59,7 @@ namespace valhalla {
 
     thor_worker_t::thor_worker_t(const boost::property_tree::ptree& config):
       mode(valhalla::sif::TravelMode::kPedestrian),
-      config(config), reader(config.get_child("mjolnir")),
+      config(config), matcher_factory(config), reader(config.get_child("mjolnir")),
       long_request(config.get<float>("thor.logging.long_request")),
       gps_accuracy(config.get<float>("meili.default.gps_accuracy")),
       search_radius(config.get<float>("meili.default.search_radius")){
@@ -249,6 +249,7 @@ namespace valhalla {
       correlated_s.clear();
       correlated_t.clear();
       isochrone_gen.Clear();
+      matcher_factory.ClearFullCache();
       if(reader.OverCommitted())
         reader.Clear();
     }

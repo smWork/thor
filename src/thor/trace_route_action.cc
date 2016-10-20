@@ -6,7 +6,6 @@ using namespace prime_server;
 #include <valhalla/baldr/geojson.h>
 #include <valhalla/baldr/pathlocation.h>
 #include <valhalla/baldr/errorcode_util.h>
-#include <valhalla/meili/map_matcher_factory.h>
 #include <valhalla/meili/map_matcher.h>
 #include <valhalla/proto/trippath.pb.h>
 
@@ -41,11 +40,10 @@ worker_t::result_t thor_worker_t::trace_route(
   result.messages.emplace_back(request_str);
 
   // Call Meili for map matching to get a collection of pathLocation Edges
-  meili::MapMatcherFactory factory(config);
   // Create a matcher
   MapMatcher* matcher;
   try {
-    matcher = factory.Create(config);
+    matcher = matcher_factory.Create(config);
   } catch (const std::invalid_argument& ex) {
     //return jsonify_error({400, 499}, request_info, std::string(ex.what()));
     throw std::runtime_error(std::string(ex.what()));
