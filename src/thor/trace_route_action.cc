@@ -6,7 +6,6 @@ using namespace prime_server;
 #include <valhalla/baldr/geojson.h>
 #include <valhalla/baldr/pathlocation.h>
 #include <valhalla/baldr/errorcode_util.h>
-#include <valhalla/meili/map_matcher_factory.h>
 #include <valhalla/meili/map_matcher.h>
 #include <valhalla/proto/trippath.pb.h>
 
@@ -44,7 +43,7 @@ worker_t::result_t thor_worker_t::trace_route(
   // Create a matcher
   MapMatcher* matcher;
   try {
-    matcher = matcher_factory_.Create(config);
+    matcher = matcher_factory.Create(config);
   } catch (const std::invalid_argument& ex) {
     //return jsonify_error({400, 499}, request_info, std::string(ex.what()));
     throw std::runtime_error(std::string(ex.what()));
@@ -109,6 +108,8 @@ worker_t::result_t thor_worker_t::trace_route(
 //    LOG_WARN("thor::route trip_path exceeded threshold::"+ request_str);
 //    midgard::logging::Log("valhalla_thor_long_request_route", " [ANALYTICS] ");
 //  }
+  delete matcher;
+
   return result;
 }
 
