@@ -24,6 +24,7 @@ using namespace prime_server;
 using namespace valhalla;
 using namespace valhalla::midgard;
 using namespace valhalla::baldr;
+using namespace valhalla::meili;
 using namespace valhalla::sif;
 using namespace valhalla::thor;
 
@@ -58,8 +59,10 @@ namespace valhalla {
 
     thor_worker_t::thor_worker_t(const boost::property_tree::ptree& config):
       mode(valhalla::sif::TravelMode::kPedestrian),
-      config(config), reader(config.get_child("mjolnir")),
-      long_request(config.get<float>("thor.logging.long_request")){
+      config(config), matcher_factory(config), reader(config.get_child("mjolnir")),
+      long_request(config.get<float>("thor.logging.long_request")),
+      gps_accuracy(config.get<float>("meili.default.gps_accuracy")),
+      search_radius(config.get<float>("meili.default.search_radius")){
       // Register edge/node costing methods
       factory.Register("auto", sif::CreateAutoCost);
       factory.Register("auto_shorter", sif::CreateAutoShorterCost);
@@ -137,7 +140,8 @@ namespace valhalla {
           case VIAROUTE:
             return route(request, request_str, request.get_optional<int>("date_time.type"), info.do_not_track);
           case TRACE_ATTRIBUTES:
-            return trace_attributes(request, info);
+          case TRACE_ROUTE:
+            return trace_route(request, request_str);
           default:
             throw valhalla_exception_t{400, 400}; //this should never happen
         }
@@ -220,6 +224,21 @@ namespace valhalla {
         locations.back().date_time_ = date_time_value;
     }
 
+    void thor_worker_t::parse_shape(const boost::property_tree::ptree& request) {
+      //we require locations
+      auto request_shape = request.get_child("shape");
+
+      for(const auto& pt : request_shape) {
+        try{
+          shape.push_back(baldr::Location::FromPtree(pt.second).latlng_);
+        }
+        catch (...) {
+          throw std::runtime_error("Failed to parse shape");
+        }
+      }
+
+    }
+
     void thor_worker_t::cleanup() {
       jsonp = boost::none;
       astar.Clear();
@@ -230,6 +249,7 @@ namespace valhalla {
       correlated_s.clear();
       correlated_t.clear();
       isochrone_gen.Clear();
+      matcher_factory.ClearFullCache();
       if(reader.OverCommitted())
         reader.Clear();
     }

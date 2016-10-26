@@ -15,6 +15,7 @@
 #include <valhalla/midgard/encoded.h>
 #include <valhalla/midgard/logging.h>
 #include <valhalla/sif/costconstants.h>
+#include <valhalla/proto/trippath.pb.h>
 
 using namespace valhalla::baldr;
 using namespace valhalla::midgard;
@@ -151,6 +152,64 @@ TripPath_RoadClass GetTripPathRoadClass(RoadClass road_class) {
       return TripPath_RoadClass_kResidential;
     case RoadClass::kServiceOther:
       return TripPath_RoadClass_kServiceOther;
+  }
+}
+
+TripPath_Use GetTripPathUse(Use use) {
+  switch (use) {
+    case Use::kRoad:
+      return TripPath_Use_kRoadUse;
+    case Use::kRamp:
+      return TripPath_Use_kRampUse;
+    case Use::kTurnChannel:
+      return TripPath_Use_kTurnChannelUse;
+    case Use::kTrack:
+      return TripPath_Use_kTrackUse;
+    case Use::kDriveway:
+      return TripPath_Use_kDrivewayUse;
+    case Use::kAlley:
+      return TripPath_Use_kAlleyUse;
+    case Use::kParkingAisle:
+      return TripPath_Use_kParkingAisleUse;
+    case Use::kEmergencyAccess:
+      return TripPath_Use_kEmergencyAccessUse;
+    case Use::kDriveThru:
+      return TripPath_Use_kDriveThruUse;
+    case Use::kCuldesac:
+      return TripPath_Use_kCuldesacUse;
+    case Use::kCycleway:
+      return TripPath_Use_kCyclewayUse;
+    case Use::kMountainBike:
+      return TripPath_Use_kMountainBikeUse;
+    case Use::kSidewalk:
+      //return TripPath_Use_kSidewalkUse;
+      return TripPath_Use_kFootwayUse;   // TODO: update when odin has been updated
+    case Use::kFootway:
+      return TripPath_Use_kFootwayUse;
+    case Use::kSteps:
+      return TripPath_Use_kStepsUse;
+    case Use::kPath:
+      return TripPath_Use_kPathUse;
+    case Use::kPedestrian:
+      return TripPath_Use_kPedestrianUse;
+    case Use::kBridleway:
+      return TripPath_Use_kBridlewayUse;
+    case Use::kOther:
+      return TripPath_Use_kOtherUse;
+    case Use::kFerry:
+      return TripPath_Use_kFerryUse;
+    case Use::kRailFerry:
+      return TripPath_Use_kRailFerryUse;
+    case Use::kRail:
+      return TripPath_Use_kRailUse;
+    case Use::kBus:
+      return TripPath_Use_kBusUse;
+    case Use::kRailConnection:
+      return TripPath_Use_kRailConnectionUse;
+    case Use::kBusConnection:
+      return TripPath_Use_kBusConnectionUse;
+    case Use::kTransitConnection:
+      return TripPath_Use_kTransitConnectionUse;
   }
 }
 
@@ -951,69 +1010,8 @@ TripPath_Edge* TripPathBuilder::AddTripEdge(const uint32_t idx,
                 360)));
   }
 
-  // Set ramp / turn channel flag
-  if (directededge->link()) {
-    if (directededge->use() == Use::kRamp)
-      trip_edge->set_ramp(true);
-    else if (directededge->use() == Use::kTurnChannel)
-      trip_edge->set_turn_channel(true);
-  }
-
-  // Set all of the use cases - only set if they are true since they are optional
-  if (directededge->use() == Use::kRoad)
-    trip_edge->set_road(true);
-
-  if (directededge->use() == Use::kTrack)
-    trip_edge->set_track(true);
-
-  if (directededge->use() == Use::kDriveway)
-    trip_edge->set_driveway(true);
-
-  if (directededge->use() == Use::kAlley)
-    trip_edge->set_alley(true);
-
-  if (directededge->use() == Use::kParkingAisle)
-    trip_edge->set_parking_aisle(true);
-
-  if (directededge->use() == Use::kEmergencyAccess)
-    trip_edge->set_emergency_access(true);
-
-  if (directededge->use() == Use::kDriveThru)
-    trip_edge->set_drive_thru(true);
-
-  if (directededge->use() == Use::kCuldesac)
-    trip_edge->set_culdesac(true);
-
-  if ((directededge->use() == Use::kFootway) || (directededge->use() == Use::kSidewalk))
-    trip_edge->set_footway(true);
-
-  if (directededge->use() == Use::kSteps)
-    trip_edge->set_stairs(true);
-
-  if (directededge->use() == Use::kCycleway)
-    trip_edge->set_cycleway(true);
-
-  if (directededge->use() == Use::kMountainBike)
-    trip_edge->set_mountain_bike(true);
-
-  if (directededge->use() == Use::kRail)
-    trip_edge->set_rail(true);
-
-  if (directededge->use() == Use::kBus)
-    trip_edge->set_bus(true);
-
-  if (directededge->use() == Use::kTransitConnection)
-    trip_edge->set_transit_connection(true);
-
-  if (directededge->use() == Use::kOther)
-    trip_edge->set_other(true);
-
-  // Set edge attributes - only set if they are true since they are optional
-  if (directededge->use() == Use::kFerry)
-    trip_edge->set_ferry(true);
-
-  if (directededge->use() == Use::kRailFerry)
-    trip_edge->set_rail_ferry(true);
+  // Set the trip path use based on directed edge use
+  trip_edge->set_use(GetTripPathUse(directededge->use()));
 
   if (directededge->toll())
     trip_edge->set_toll(true);
