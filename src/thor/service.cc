@@ -146,6 +146,10 @@ namespace valhalla {
             throw valhalla_exception_t{400, 400}; //this should never happen
         }
       }
+      catch(const valhalla_exception_t& e) {
+        valhalla::midgard::logging::Log("400::" + std::string(e.what()), " [ANALYTICS] ");
+        return jsonify_error({e.status_code, e.error_code, e.extra}, info);
+      }
       catch(const std::exception& e) {
         valhalla::midgard::logging::Log("400::" + std::string(e.what()), " [ANALYTICS] ");
         return jsonify_error({400, 499, std::string(e.what())}, info);
