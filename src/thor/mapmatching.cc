@@ -4,7 +4,7 @@
 #include <valhalla/midgard/logging.h>
 #include <valhalla/baldr/errorcode_util.h>
 
-#include "thor/mapmatching_route.h"
+#include "thor/mapmatching.h"
 
 using namespace valhalla::baldr;
 using namespace valhalla::sif;
@@ -15,7 +15,7 @@ namespace thor {
 
 // Form the path from the map-matching results. This path gets sent to
 // TripPathBuilder.
-std::vector<PathInfo> MapMatchingRoute::FormPath(
+std::vector<PathInfo> MapMatching::FormPath(
     MapMatcher* matcher, const std::vector<meili::MatchResult>& results,
     const std::shared_ptr<sif::DynamicCost>* mode_costing,
     const sif::TravelMode mode) {

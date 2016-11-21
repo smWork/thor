@@ -1,5 +1,5 @@
-#ifndef VALHALLA_THOR_MAPMATCHINGROUTE_H_
-#define VALHALLA_THOR_MAPMATCHINGROUTE_H_
+#ifndef VALHALLA_THOR_MAPMATCHING_H_
+#define VALHALLA_THOR_MAPMATCHING_H_
 
 #include <vector>
 #include <map>
@@ -21,7 +21,7 @@
 namespace valhalla {
 namespace thor {
 
-class MapMatchingRoute {
+class MapMatching {
  public:
 
   std::vector<PathInfo> FormPath(meili::MapMatcher* matcher,
@@ -39,4 +39,4 @@ class MapMatchingRoute {
 }
 }
 
-#endif  // VALHALLA_THOR_MAPMATCHINGROUTE_H_
+#endif  // VALHALLA_THOR_MAPMATCHING_H_
