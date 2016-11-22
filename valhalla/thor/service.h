@@ -66,6 +66,8 @@ class thor_worker_t {
       const baldr::PathLocation& destination);
   bool route_match(prime_server::worker_t::result_t& result);
   bool route_match(std::vector<PathInfo>& path_infos);
+  bool route_match_get_attributes(prime_server::worker_t::result_t& result);
+  bool route_match_get_attributes(std::vector<PathInfo>& path_infos);
   void map_match(prime_server::worker_t::result_t& result);
   const baldr::PathLocation::PathEdge* find_begin_edge() const;
   const baldr::PathLocation::PathEdge* find_end_edge() const;
@@ -78,10 +80,7 @@ class thor_worker_t {
       std::vector<baldr::PathLocation>& correlated, const std::string &costing,
       const boost::optional<int> &date_time_type,
       const std::string &request_str);
-  std::list<valhalla::odin::TripPath> path_from_trace(
-      std::vector<thor::PathInfo> path_edges, const std::string &costing,
-      const boost::optional<int> &date_time_type,
-      const std::string &request_str);
+
 
   void parse_locations(const boost::property_tree::ptree& request);
   void parse_shape(const boost::property_tree::ptree& request);
@@ -105,7 +104,7 @@ class thor_worker_t {
       const std::string &request_str, const bool header_dnt);
   prime_server::worker_t::result_t trace_attributes(
       const boost::property_tree::ptree &request,
-      const std::string &request_str, const bool header_dnt);
+      const std::string &request_str, prime_server::http_request_t::info_t& request_info);
 
   valhalla::sif::TravelMode mode;
   boost::property_tree::ptree config;
@@ -120,6 +119,7 @@ class thor_worker_t {
   sif::CostFactory<sif::DynamicCost> factory;
   valhalla::sif::cost_ptr_t mode_costing[static_cast<int>(sif::TravelMode::kMaxTravelMode)];
   valhalla::baldr::GraphReader reader;
+  valhalla::odin::TripPath trip_path;
   // Path algorithms (TODO - perhaps use a map?))
   AStarPathAlgorithm astar;
   BidirectionalAStar bidir_astar;

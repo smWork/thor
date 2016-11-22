@@ -21,12 +21,6 @@ using namespace valhalla::meili;
 using namespace valhalla::thor;
 
 namespace {
-
-const headers_t::value_type CORS { "Access-Control-Allow-Origin", "*" };
-const headers_t::value_type JSON_MIME { "Content-type",
-    "application/json;charset=utf-8" };
-const headers_t::value_type JS_MIME { "Content-type",
-    "application/javascript;charset=utf-8" };
 }
 
 namespace valhalla {
@@ -70,7 +64,6 @@ worker_t::result_t thor_worker_t::trace_route(const boost::property_tree::ptree 
     midgard::logging::Log("valhalla_thor_long_request_trace_route",
                           " [ANALYTICS] ");
   }
-
   return result;
 }
 
@@ -102,7 +95,6 @@ bool thor_worker_t::route_match(worker_t::result_t& result) {
     result.messages.emplace_back(trip_path.SerializeAsString());
 
     LOG_INFO(">>>>> route_match SUCCESS!!");
-
     return true;
   }
   return false;
@@ -159,7 +151,6 @@ bool thor_worker_t::route_match(std::vector<PathInfo>& path_infos) {
   uint32_t de_length = std::round(de->length() * (1 - begin_path_edge->dist)) + 50; // TODO make constant
   EdgeLabel prev_edge_label;
   thor::ExpandFromNode expandfromnode;
-
   // Loop over shape to form path from matching edges
   while (index < shape.size()
       && (std::round(shape.at(0).Distance(shape.at(index))) < de_length)) {
@@ -179,7 +170,6 @@ bool thor_worker_t::route_match(std::vector<PathInfo>& path_infos) {
                                         end_node_tile, de->endnode(),
                                         end_edge_start_node, prev_edge_label,
                                         elapsed_time, path_infos, false)) {
-
         // Update the elapsed time based on transition cost
         elapsed_time += mode_costing[static_cast<int>(mode)]->TransitionCost(
             de, end_edge_tile->node(end_edge_start_node), prev_edge_label).secs;
@@ -238,7 +228,6 @@ const GraphId thor_worker_t::find_start_node(const GraphId& edge_id) {
 
   return opp_de->endnode();
 }
-
 
 void thor_worker_t::map_match(worker_t::result_t& result) {
 
