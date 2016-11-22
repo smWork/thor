@@ -64,11 +64,9 @@ class thor_worker_t {
   thor::PathAlgorithm* get_path_algorithm(
       const std::string& routetype, const baldr::PathLocation& origin,
       const baldr::PathLocation& destination);
-  bool route_match(prime_server::worker_t::result_t& result);
+  valhalla::odin::TripPath route_match();
   bool route_match(std::vector<PathInfo>& path_infos);
-  bool route_match_get_attributes(prime_server::worker_t::result_t& result);
-  bool route_match_get_attributes(std::vector<PathInfo>& path_infos);
-  void map_match(prime_server::worker_t::result_t& result);
+  valhalla::odin::TripPath map_match();
   const baldr::PathLocation::PathEdge* find_begin_edge() const;
   const baldr::PathLocation::PathEdge* find_end_edge() const;
   const baldr::GraphId find_start_node(const baldr::GraphId& edge_id);
@@ -119,7 +117,6 @@ class thor_worker_t {
   sif::CostFactory<sif::DynamicCost> factory;
   valhalla::sif::cost_ptr_t mode_costing[static_cast<int>(sif::TravelMode::kMaxTravelMode)];
   valhalla::baldr::GraphReader reader;
-  valhalla::odin::TripPath trip_path;
   // Path algorithms (TODO - perhaps use a map?))
   AStarPathAlgorithm astar;
   BidirectionalAStar bidir_astar;

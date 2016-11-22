@@ -43,13 +43,14 @@ worker_t::result_t thor_worker_t::trace_route(const boost::property_tree::ptree 
 
   // If the exact points from a prior route that was run agains the Valhalla road network,
   //then we can traverse the exact shape to form a path by using edge-walking algorithm
-  if (!route_match(result)) {
+  auto trip_path = route_match();
+  if (trip_path.node().size() == 0) {
     //If no Valhalla route match, then use meili map matching
     //to match to local route network. No shortcuts are used and detailed
     //information at every intersection becomes available.
-    map_match(result);
+    trip_path = map_match();
   }
-
+  result.messages.emplace_back(trip_path.SerializeAsString());
   // Get processing time for thor
   auto e = std::chrono::system_clock::now();
   std::chrono::duration<float, std::milli> elapsed_time = e - s;
@@ -80,24 +81,23 @@ worker_t::result_t thor_worker_t::trace_route(const boost::property_tree::ptree 
  *
  */
 
-bool thor_worker_t::route_match(worker_t::result_t& result) {
+odin::TripPath thor_worker_t::route_match() {
+  odin::TripPath trip_path;
   std::vector<PathInfo> path_infos;
   if (route_match(path_infos)) {
     // Empty through location list
     std::vector<baldr::PathLocation> through_loc;
 
     // Form the trip path based on mode costing, origin, destination, and path edges
-    auto trip_path = thor::TripPathBuilder::Build(reader, mode_costing,
+    trip_path = thor::TripPathBuilder::Build(reader, mode_costing,
                                                   path_infos,
                                                   correlated.front(),
                                                   correlated.back(),
                                                   through_loc);
-    result.messages.emplace_back(trip_path.SerializeAsString());
 
     LOG_INFO(">>>>> route_match SUCCESS!!");
-    return true;
   }
-  return false;
+  return trip_path;
 }
 
 bool thor_worker_t::route_match(std::vector<PathInfo>& path_infos) {
@@ -229,8 +229,8 @@ const GraphId thor_worker_t::find_start_node(const GraphId& edge_id) {
   return opp_de->endnode();
 }
 
-void thor_worker_t::map_match(worker_t::result_t& result) {
-
+odin::TripPath thor_worker_t::map_match() {
+  odin::TripPath trip_path;
   // Call Meili for map matching to get a collection of pathLocation Edges
   // Create a matcher
   MapMatcher* matcher;
@@ -281,16 +281,17 @@ void thor_worker_t::map_match(worker_t::result_t& result) {
     std::vector<baldr::PathLocation> through_loc;
 
     // Form the trip path based on mode costing, origin, destination, and path edges
-    auto trip_path = thor::TripPathBuilder::Build(matcher->graphreader(),
+    trip_path = thor::TripPathBuilder::Build(matcher->graphreader(),
                                                   mode_costing, path_edges,
                                                   origin, destination,
                                                   through_loc);
-    result.messages.emplace_back(trip_path.SerializeAsString());
+
     delete matcher;
   } else {
     delete matcher;
     throw baldr::valhalla_exception_t { 400, 442 };
   }
+  return trip_path;
 }
 }
 }

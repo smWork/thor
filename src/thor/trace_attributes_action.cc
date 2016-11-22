@@ -41,6 +41,7 @@ namespace {
     json::ArrayPtr edges = json::array({});
       if (trip_path.node().size() > 0) {
         for(const auto& node : trip_path.node()){
+          if (node.has_edge()) {
           edges->push_back(static_cast<uint64_t>(node.edge().id()));
           edges->push_back(static_cast<uint64_t>(node.edge().base_data_id()));
           edges->push_back(json::fp_t{node.edge().weighted_grade()});
@@ -51,6 +52,7 @@ namespace {
           LOG_INFO(" edge weighted_grade::" + std::to_string(node.edge().weighted_grade()));
           LOG_INFO(" edge max_upward_grade::" + std::to_string(node.edge().max_upward_grade()));
           LOG_INFO(" edge max_downward_grade::" + std::to_string(node.edge().max_downward_grade()));
+          }
         }
       }
       auto json = json::map({
@@ -80,17 +82,18 @@ worker_t::result_t thor_worker_t::trace_attributes(
 
   //get time for start of request
   auto s = std::chrono::system_clock::now();
-  worker_t::result_t result { true  };
+ // worker_t::result_t result { false  };
   // Forward the original request
-  result.messages.emplace_back(request_str);
+ // result.messages.emplace_back(request_str);
 
   // If the exact points from a prior route that was run agains the Valhalla road network,
   //then we can traverse the exact shape to form a path by using edge-walking algorithm
-  if (!route_match_get_attributes(result)) {
+  auto trip_path = route_match();
+  if (trip_path.node().size() == 0) {
     //If no Valhalla route match, then use meili map matching
     //to match to local route network. No shortcuts are used and detailed
     //information at every intersection becomes available.
-    map_match(result);
+    trip_path = map_match();
   }
   //result.messages.emplace_back(result);
   json::MapPtr json;
@@ -120,133 +123,9 @@ worker_t::result_t thor_worker_t::trace_attributes(
   }
   http_response_t response(200, "OK", stream.str(), headers_t{CORS, jsonp ? JS_MIME : JSON_MIME});
   response.from_info(request_info);
- // worker_t::result_t result{false};
+  worker_t::result_t result{false};
   result.messages.emplace_back(response.to_string());
   return result;
 }
-}
-
-// Form the path from the map-matching results. This path gets sent to TripPathBuilder.
-// PathInfo is primarily a list of edge Ids but it also include elapsed time to the end
-// of each edge. We will need to use the existing costing method to form the elapsed time
-// the path. We will start with just using edge costs and will add transition costs.
-
-/*
- * Returns true if an exact route match using an “edge-walking” algorithm.
- * This is for use when the input shape is exact shape from a prior Valhalla route.
- * This will walk the input shape and compare to Valhalla edge’s end node positions to
- * form the list of edges.
- *
- */
-
-bool thor_worker_t::route_match_get_attributes(worker_t::result_t& result) {
-  std::vector<PathInfo> path_infos;
-  if (route_match(path_infos)) {
-    // Empty through location list
-    std::vector<baldr::PathLocation> through_loc;
-
-    // Form the trip path based on mode costing, origin, destination, and path edges
-    trip_path = thor::TripPathBuilder::Build(reader, mode_costing,
-                                                  path_infos,
-                                                  correlated.front(),
-                                                  correlated.back(),
-                                                  through_loc);
-
-    result.messages.emplace_back(trip_path.SerializeAsString());
-    LOG_INFO(">>>>> route_match SUCCESS!!");
-    return true;
-  }
-  return false;
-}
-
-bool thor_worker_t::route_match_get_attributes(std::vector<PathInfo>& path_infos) {
-  float elapsed_time = 0.f;
-
-  // Process and validate begin edge
-  const PathLocation::PathEdge* begin_path_edge = find_begin_edge();
-  if ((begin_path_edge == nullptr) || !(begin_path_edge->id.Is_Valid())) {
-    throw std::runtime_error("Invalid begin edge id");
-  }
-  const GraphTile* begin_edge_tile = reader.GetGraphTile(begin_path_edge->id);
-  if (begin_edge_tile == nullptr) {
-    throw std::runtime_error("Begin tile is null");
-  }
-
-  // Process and validate end edge
-  const PathLocation::PathEdge* end_path_edge = find_end_edge();
-  if ((end_path_edge == nullptr) || !(end_path_edge->id.Is_Valid())) {
-    throw std::runtime_error("Invalid end edge id");
-  }
-  const GraphTile* end_edge_tile = reader.GetGraphTile(end_path_edge->id);
-  if (end_edge_tile == nullptr) {
-    throw std::runtime_error("End tile is null");
-  }
-
-  // Assign the end edge start node
-  const GraphId end_edge_start_node = find_start_node(end_path_edge->id);
-
-  // Process directed edge and info
-  const DirectedEdge* de = begin_edge_tile->directededge(begin_path_edge->id);
-  const GraphTile* end_node_tile = reader.GetGraphTile(de->endnode());
-  if (begin_edge_tile == nullptr) {
-    throw std::runtime_error("End node tile is null");
-  }
-  PointLL de_end_ll = end_node_tile->node(de->endnode())->latlng();
-
-  // If start and end have the same edge then add and return
-  if (begin_path_edge->id == end_path_edge->id) {
-
-    // Update the elapsed time edge cost at single edge
-    elapsed_time += mode_costing[static_cast<int>(mode)]->EdgeCost(de).secs * (end_path_edge->dist - begin_path_edge->dist);
-
-    // Add single edge
-    path_infos.emplace_back(mode, std::round(elapsed_time), begin_path_edge->id, 0);
-    return true;
-  }
-
-  // Initialize indexes and shape
-  size_t index = 0;
-  uint32_t shape_length = 0;
-  uint32_t de_length = std::round(de->length() * (1 - begin_path_edge->dist)) + 50; // TODO make constant
-  EdgeLabel prev_edge_label;
-  thor::ExpandFromNode expandfromnode;
-  // Loop over shape to form path from matching edges
-  while (index < shape.size()
-      && (std::round(shape.at(0).Distance(shape.at(index))) < de_length)) {
-    if (shape.at(index).ApproximatelyEqual(de_end_ll)) {
-
-      // Update the elapsed time edge cost at begin edge
-      elapsed_time += mode_costing[static_cast<int>(mode)]->EdgeCost(de).secs * (1 - begin_path_edge->dist);
-
-      // Add begin edge
-      path_infos.emplace_back(mode, std::round(elapsed_time), begin_path_edge->id, 0);
-
-      // Set previous edge label
-      prev_edge_label = {kInvalidLabel, begin_path_edge->id, de, {}, 0, 0, mode, 0};
-
-      // Continue walking shape to find the end edge...
-      if (expandfromnode.FormPath(mode_costing, mode, reader, shape, index,
-                                        end_node_tile, de->endnode(),
-                                        end_edge_start_node, prev_edge_label,
-                                        elapsed_time, path_infos, false)) {
-        // Update the elapsed time based on transition cost
-        elapsed_time += mode_costing[static_cast<int>(mode)]->TransitionCost(
-            de, end_edge_tile->node(end_edge_start_node), prev_edge_label).secs;
-
-        // Update the elapsed time based on edge cost
-        elapsed_time += mode_costing[static_cast<int>(mode)]->EdgeCost(de).secs * end_path_edge->dist;
-
-        // Add end edge
-        path_infos.emplace_back(mode, std::round(elapsed_time), end_path_edge->id, 0);
-
-        return true;
-      } else {
-        // Did not find end edge - so get out
-        return false;
-      }
-    }
-    index++;
-  }
-  return false;
 }
 }
