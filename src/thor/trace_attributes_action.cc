@@ -1,27 +1,17 @@
-#include <vector>
-#include <functional>
-#include <string>
-#include <stdexcept>
-#include <vector>
-#include <unordered_map>
-#include <cstdint>
-#include <sstream>
+#include <prime_server/prime_server.hpp>
+
+using namespace prime_server;
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <valhalla/midgard/logging.h>
 #include <valhalla/midgard/constants.h>
 #include <valhalla/baldr/json.h>
-#include <valhalla/baldr/geojson.h>
 #include <valhalla/baldr/errorcode_util.h>
 #include <valhalla/proto/trippath.pb.h>
 
-#include <prime_server/prime_server.hpp>
-
 #include "thor/service.h"
-#include "thor/expandfromnode.h"
 
-using namespace prime_server;
 using namespace valhalla;
 using namespace valhalla::midgard;
 using namespace valhalla::baldr;
@@ -36,30 +26,27 @@ namespace {
   const headers_t::value_type JS_MIME { "Content-type", "application/javascript;charset=utf-8" };
 
 
-  json::MapPtr serialize(const boost::optional<std::string>& id, valhalla::odin::TripPath trip_path) {
+  json::MapPtr serialize(valhalla::odin::TripPath trip_path) {
     //lets get some edge attributes
     json::ArrayPtr edges = json::array({});
       if (trip_path.node().size() > 0) {
         for(const auto& node : trip_path.node()){
           if (node.has_edge()) {
-          edges->push_back(static_cast<uint64_t>(node.edge().id()));
-          edges->push_back(static_cast<uint64_t>(node.edge().base_data_id()));
-          edges->push_back(json::fp_t{node.edge().weighted_grade()});
-          edges->push_back(static_cast<uint64_t>(node.edge().max_upward_grade()));
-          edges->push_back(static_cast<uint64_t>(node.edge().max_downward_grade()));
-          LOG_INFO(" edge id::" + std::to_string(node.edge().id()));
-          LOG_INFO(" edge base_data_id::" + std::to_string(node.edge().base_data_id()));
-          LOG_INFO(" edge weighted_grade::" + std::to_string(node.edge().weighted_grade()));
-          LOG_INFO(" edge max_upward_grade::" + std::to_string(node.edge().max_upward_grade()));
-          LOG_INFO(" edge max_downward_grade::" + std::to_string(node.edge().max_downward_grade()));
+            edges->emplace_back(json::map({
+               {"id", static_cast<uint64_t>(node.edge().id())},
+              {"base_data_id", static_cast<uint64_t>(node.edge().base_data_id())},
+              {"weighted_grade", json::fp_t{node.edge().weighted_grade()}},
+              {"max_upward_grade", static_cast<uint64_t>(node.edge().max_upward_grade())},
+              {"max_downward_grade", static_cast<uint64_t>(node.edge().max_downward_grade())}
+            }));
           }
         }
       }
       auto json = json::map({
-        {"trace_attributes", edges}      });
-      //  json->emplace("edges", json::array({edges}));
-        if (id)
-        json->emplace("id", *id);
+        {"edges", edges}
+      });
+      //  if (id)
+      //  json->emplace("id", *id);
       return json;
     }
 }
@@ -97,9 +84,8 @@ worker_t::result_t thor_worker_t::trace_attributes(
   }
   //result.messages.emplace_back(result);
   json::MapPtr json;
-  //auto id = attributes.get_optional<std::string>("id");
   //serialize output to Thor
-  json = serialize(nullptr, trip_path);
+  json = serialize(trip_path);
 
 
   //jsonp callback if need be
