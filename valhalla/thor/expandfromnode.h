@@ -24,16 +24,14 @@ class ExpandFromNode {
  public:
 
   static bool FormPath(const std::shared_ptr<sif::DynamicCost>* mode_costing,
-                                const sif::TravelMode mode,
-                                baldr::GraphReader& reader,
-                                std::vector<midgard::PointLL> shape,
-                                size_t& correlated_index,
-                                const baldr::GraphTile* tile, const baldr::GraphId& node,
-                                const baldr::GraphId& stop_node,
-                                sif::EdgeLabel& prev_edge_label,
-                                float& elapsed_time,
-                                std::vector<PathInfo>& path_infos,
-                                const bool from_transition);
+                       const sif::TravelMode mode, baldr::GraphReader& reader,
+                       std::vector<midgard::PointLL> shape,
+                       size_t& correlated_index, const baldr::GraphTile* tile,
+                       const baldr::GraphId& node,
+                       const baldr::GraphId& stop_node,
+                       sif::EdgeLabel& prev_edge_label, float& elapsed_time,
+                       std::vector<PathInfo>& path_infos,
+                       const bool from_transition);
 };
 
 }

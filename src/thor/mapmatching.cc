@@ -20,8 +20,7 @@ std::vector<PathInfo> MapMatching::FormPath(
     const std::shared_ptr<sif::DynamicCost>* mode_costing,
     const sif::TravelMode mode) {
   // Set the mode and costing
-  mode_ = mode;
-  const auto& costing = mode_costing[static_cast<uint32_t>(mode_)];
+  const auto& costing = mode_costing[static_cast<uint32_t>(mode)];
   // Iterate through the matched path. Form PathInfo - populate elapsed time
   // Return an empty path (or throw exception) if path is not connected.
   float elapsed_time = 0;
