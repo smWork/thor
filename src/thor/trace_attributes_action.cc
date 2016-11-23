@@ -29,26 +29,31 @@ namespace {
   json::MapPtr serialize(valhalla::odin::TripPath trip_path) {
     //lets get some edge attributes
     json::ArrayPtr edges = json::array({});
-      if (trip_path.node().size() > 0) {
-        for(const auto& node : trip_path.node()){
-          if (node.has_edge()) {
-            edges->emplace_back(json::map({
-               {"id", static_cast<uint64_t>(node.edge().id())},
-              {"base_data_id", static_cast<uint64_t>(node.edge().base_data_id())},
-              {"weighted_grade", json::fp_t{node.edge().weighted_grade()}},
-              {"max_upward_grade", static_cast<uint64_t>(node.edge().max_upward_grade())},
-              {"max_downward_grade", static_cast<uint64_t>(node.edge().max_downward_grade())}
-            }));
-          }
+    if (trip_path.node().size() > 0) {
+      for(const auto& node : trip_path.node()){
+        if (node.has_edge()) {
+          auto names = json::array({});
+          for (const auto& name : node.edge().name())
+            names->push_back(name);
+
+          edges->emplace_back(json::map({
+            {"max_downward_grade", static_cast<uint64_t>(node.edge().max_downward_grade())},
+            {"max_upward_grade", static_cast<uint64_t>(node.edge().max_upward_grade())},
+            {"weighted_grade", json::fp_t{node.edge().weighted_grade()}},
+            {"base_data_id", static_cast<uint64_t>(node.edge().base_data_id())},
+            {"id", static_cast<uint64_t>(node.edge().id())},
+            {"names", names}
+          }));
         }
       }
-      auto json = json::map({
-        {"edges", edges}
-      });
-      //  if (id)
-      //  json->emplace("id", *id);
-      return json;
     }
+    auto json = json::map({
+      {"edges", edges}
+    });
+    //  if (id)
+    //  json->emplace("id", *id);
+    return json;
+  }
 }
 
 namespace valhalla {
