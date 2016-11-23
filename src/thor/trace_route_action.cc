@@ -1,6 +1,7 @@
 #include <prime_server/prime_server.hpp>
-
 using namespace prime_server;
+
+#include <memory>
 
 #include <valhalla/midgard/logging.h>
 #include <valhalla/baldr/geojson.h>
@@ -19,9 +20,6 @@ using namespace valhalla::baldr;
 using namespace valhalla::sif;
 using namespace valhalla::meili;
 using namespace valhalla::thor;
-
-namespace {
-}
 
 namespace valhalla {
 namespace thor {
@@ -231,9 +229,9 @@ odin::TripPath thor_worker_t::map_match() {
   odin::TripPath trip_path;
   // Call Meili for map matching to get a collection of pathLocation Edges
   // Create a matcher
-  MapMatcher* matcher;
+  std::shared_ptr<MapMatcher> matcher;
   try {
-    matcher = matcher_factory.Create(config);
+    matcher.reset(matcher_factory.Create(config));
   } catch (const std::invalid_argument& ex) {
     //return jsonify_error({400, 499}, request_info, std::string(ex.what()));
     throw std::runtime_error(std::string(ex.what()));
@@ -251,8 +249,7 @@ odin::TripPath thor_worker_t::map_match() {
   }
 
   // Form the path edges based on the matched points
-  thor::MapMatching mapmatching;
-  std::vector<PathInfo> path_edges = mapmatching.FormPath(matcher, results,
+  std::vector<PathInfo> path_edges = MapMatching::FormPath(matcher.get(), results,
                                                           mode_costing, mode);
 
   // Set origin and destination from map matching results
@@ -277,10 +274,7 @@ odin::TripPath thor_worker_t::map_match() {
                                                   mode_costing, path_edges,
                                                   origin, destination,
                                                   through_loc);
-
-    delete matcher;
   } else {
-    delete matcher;
     throw baldr::valhalla_exception_t { 400, 442 };
   }
   return trip_path;
