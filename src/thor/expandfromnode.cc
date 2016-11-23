@@ -34,7 +34,7 @@ bool ExpandFromNode::FormPath(const std::shared_ptr<sif::DynamicCost>* mode_cost
                               const bool from_transition) {
 
   // Set the mode and costing
-  mode_ = mode;
+  sif::TravelMode mode_ = mode;
 
   // If node equals stop node then when are done expanding
   if (node == stop_node) {
@@ -52,10 +52,6 @@ bool ExpandFromNode::FormPath(const std::shared_ptr<sif::DynamicCost>* mode_cost
 
     // Process transition edge if previous edge was not from a transition
     if (de->trans_down() || de->trans_up()) {
-      if (de->trans_down()) {
-      }
-      if (de->trans_up()) {
-      }
       if (from_transition) {
         continue;
       } else {

@@ -36,9 +36,6 @@ class ExpandFromNode {
                                 const bool from_transition);
  protected:
 
-  // Current travel mode
-  sif::TravelMode mode_;
-
 };
 
 }

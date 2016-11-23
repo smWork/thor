@@ -87,7 +87,6 @@ worker_t::result_t thor_worker_t::trace_attributes(
     //information at every intersection becomes available.
     trip_path = map_match();
   }
-  //result.messages.emplace_back(result);
   json::MapPtr json;
   //serialize output to Thor
   json = serialize(trip_path);
