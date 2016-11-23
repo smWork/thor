@@ -22,9 +22,9 @@ namespace thor {
  *
  */
 bool ExpandFromNode::FormPath(const std::shared_ptr<sif::DynamicCost>* mode_costing,
-                              const TravelMode mode,
+                              const TravelMode& mode,
                               GraphReader& reader,
-                              std::vector<midgard::PointLL> shape,
+                              const std::vector<midgard::PointLL>& shape,
                               size_t& correlated_index,
                               const GraphTile* tile, const GraphId& node,
                               const GraphId& stop_node,
