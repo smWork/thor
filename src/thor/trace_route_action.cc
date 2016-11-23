@@ -251,9 +251,8 @@ odin::TripPath thor_worker_t::map_match() {
   }
 
   // Form the path edges based on the matched points
-  thor::MapMatching mapmatching;
-  std::vector<PathInfo> path_edges = mapmatching.FormPath(matcher, results,
-                                                          mode_costing, mode);
+  std::vector<PathInfo> path_edges = MapMatching::FormPath(matcher, results,
+                                                           mode_costing, mode);
 
   // Set origin and destination from map matching results
   auto first_result_with_state = std::find_if(
