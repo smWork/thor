@@ -95,7 +95,6 @@ odin::TripPath thor_worker_t::route_match() {
                                                   correlated.back(),
                                                   through_loc);
 
-    LOG_INFO(">>>>> route_match SUCCESS!!");
   }
   return trip_path;
 }
@@ -250,12 +249,6 @@ odin::TripPath thor_worker_t::map_match() {
   std::vector<meili::MatchResult> results;
   for (size_t i = 0; i < sequence.size(); i++) {
     results = (matcher->OfflineMatch(sequence));
-  }
-  LOG_INFO("Matched Results from input trace: ");
-  for (const auto& result : results) {
-    LOG_INFO(
-        std::to_string(result.lnglat().first) + ", "
-            + std::to_string(result.lnglat().second));
   }
 
   // Form the path edges based on the matched points
