@@ -1094,8 +1094,7 @@ TripPath_Edge* TripPathBuilder::AddTripEdge(const GraphId& edge,
   trip_edge->set_base_data_id(edgeinfo.wayid());
 
   // Set weighted grade
-  trip_edge->set_weighted_grade(
-      static_cast<float>(directededge->weighted_grade() - 6.5f) / 0.6f);
+  trip_edge->set_weighted_grade((directededge->weighted_grade() - 6.f) / 0.6f);
 
   // Set maximum upward grade
   trip_edge->set_max_upward_grade(directededge->max_up_slope());
