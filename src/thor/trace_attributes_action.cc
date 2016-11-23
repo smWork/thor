@@ -42,7 +42,7 @@ namespace {
             {"weighted_grade", json::fp_t{node.edge().weighted_grade(), 3}},
             {"length", json::fp_t{node.edge().length(), 3}},
             {"speed", json::fp_t{node.edge().speed(), 3}},
-            {"base_data_id", static_cast<uint64_t>(node.edge().base_data_id())},
+            {"way_id", static_cast<uint64_t>(node.edge().way_id())},
             {"id", static_cast<uint64_t>(node.edge().id())},
             {"names", names}
           }));

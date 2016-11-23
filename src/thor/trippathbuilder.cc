@@ -1090,8 +1090,8 @@ TripPath_Edge* TripPathBuilder::AddTripEdge(const GraphId& edge,
   // Set edge id (graphid value)
   trip_edge->set_id(edge.value);
 
-  // Set base data id (wayid for OSM)
-  trip_edge->set_base_data_id(edgeinfo.wayid());
+  // Set way id (base data id)
+  trip_edge->set_way_id(edgeinfo.wayid());
 
   // Set weighted grade
   trip_edge->set_weighted_grade((directededge->weighted_grade() - 6.f) / 0.6f);
