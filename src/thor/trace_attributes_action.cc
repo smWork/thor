@@ -26,7 +26,7 @@ namespace {
   const headers_t::value_type JS_MIME { "Content-type", "application/javascript;charset=utf-8" };
 
 
-  json::MapPtr serialize(valhalla::odin::TripPath trip_path) {
+  json::MapPtr serialize(valhalla::odin::TripPath trip_path, const boost::optional<std::string>& id) {
     //lets get some edge attributes
     json::ArrayPtr edges = json::array({});
     if (trip_path.node().size() > 0) {
@@ -50,8 +50,8 @@ namespace {
     auto json = json::map({
       {"edges", edges}
     });
-    //  if (id)
-    //  json->emplace("id", *id);
+    if (id)
+      json->emplace("id", *id);
     return json;
   }
 }
@@ -89,7 +89,7 @@ worker_t::result_t thor_worker_t::trace_attributes(
   }
   json::MapPtr json;
   //serialize output to Thor
-  json = serialize(trip_path);
+  json = serialize(trip_path, request.get_optional<std::string>("id"));
 
 
   //jsonp callback if need be
