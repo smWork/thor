@@ -37,9 +37,9 @@ namespace {
             names->push_back(name);
 
           edges->emplace_back(json::map({
-            {"max_downward_grade", static_cast<uint64_t>(node.edge().max_downward_grade())},
-            {"max_upward_grade", static_cast<uint64_t>(node.edge().max_upward_grade())},
-            {"weighted_grade", json::fp_t{node.edge().weighted_grade()}},
+            {"max_downward_grade", static_cast<int64_t>(node.edge().max_downward_grade())},
+            {"max_upward_grade", static_cast<int64_t>(node.edge().max_upward_grade())},
+            {"weighted_grade", json::fp_t{node.edge().weighted_grade(), 2}},
             {"base_data_id", static_cast<uint64_t>(node.edge().base_data_id())},
             {"id", static_cast<uint64_t>(node.edge().id())},
             {"names", names}
