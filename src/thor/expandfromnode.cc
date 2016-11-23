@@ -33,9 +33,6 @@ bool ExpandFromNode::FormPath(const std::shared_ptr<sif::DynamicCost>* mode_cost
                               std::vector<PathInfo>& path_infos,
                               const bool from_transition) {
 
-  // Set the mode and costing
-  sif::TravelMode mode_ = mode;
-
   // If node equals stop node then when are done expanding
   if (node == stop_node) {
     return true;
@@ -59,7 +56,7 @@ bool ExpandFromNode::FormPath(const std::shared_ptr<sif::DynamicCost>* mode_cost
         if (end_node_tile == nullptr) {
           continue;
         }
-        if (this->FormPath(mode_costing, mode_, reader, shape, correlated_index, end_node_tile, de->endnode(),
+        if (FormPath(mode_costing, mode, reader, shape, correlated_index, end_node_tile, de->endnode(),
                              stop_node, prev_edge_label, elapsed_time, path_infos, true)) {
           return true;
         } else {
@@ -86,11 +83,11 @@ bool ExpandFromNode::FormPath(const std::shared_ptr<sif::DynamicCost>* mode_cost
             < de_length)) {
       if (shape.at(index).ApproximatelyEqual(de_end_ll)) {
         // Update the elapsed time based on transition cost
-        elapsed_time += mode_costing[static_cast<int>(mode_)]->TransitionCost(
+        elapsed_time += mode_costing[static_cast<int>(mode)]->TransitionCost(
             de, node_info, prev_edge_label).secs;
 
         // Update the elapsed time based on edge cost
-        elapsed_time += mode_costing[static_cast<int>(mode_)]->EdgeCost(de).secs;
+        elapsed_time += mode_costing[static_cast<int>(mode)]->EdgeCost(de).secs;
 
         // Add edge and update correlated index
         path_infos.emplace_back(mode, std::round(elapsed_time), edge_id, 0);
@@ -99,7 +96,7 @@ bool ExpandFromNode::FormPath(const std::shared_ptr<sif::DynamicCost>* mode_cost
         prev_edge_label = {kInvalidLabel, edge_id, de, {}, 0, 0, mode, 0};
 
         // Continue walking shape to find the end edge...
-        return (this->FormPath(mode_costing, mode_, reader, shape, index, end_node_tile, de->endnode(),
+        return (FormPath(mode_costing, mode, reader, shape, index, end_node_tile, de->endnode(),
                                  stop_node, prev_edge_label, elapsed_time, path_infos, false));
 
       }

@@ -149,7 +149,6 @@ bool thor_worker_t::route_match(std::vector<PathInfo>& path_infos) {
   uint32_t shape_length = 0;
   uint32_t de_length = std::round(de->length() * (1 - begin_path_edge->dist)) + 50; // TODO make constant
   EdgeLabel prev_edge_label;
-  thor::ExpandFromNode expandfromnode;
   // Loop over shape to form path from matching edges
   while (index < shape.size()
       && (std::round(shape.at(0).Distance(shape.at(index))) < de_length)) {
@@ -165,7 +164,7 @@ bool thor_worker_t::route_match(std::vector<PathInfo>& path_infos) {
       prev_edge_label = {kInvalidLabel, begin_path_edge->id, de, {}, 0, 0, mode, 0};
 
       // Continue walking shape to find the end edge...
-      if (expandfromnode.FormPath(mode_costing, mode, reader, shape, index,
+      if (ExpandFromNode::FormPath(mode_costing, mode, reader, shape, index,
                                         end_node_tile, de->endnode(),
                                         end_edge_start_node, prev_edge_label,
                                         elapsed_time, path_infos, false)) {

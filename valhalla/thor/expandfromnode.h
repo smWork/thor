@@ -23,7 +23,7 @@ namespace thor {
 class ExpandFromNode {
  public:
 
-  bool FormPath(const std::shared_ptr<sif::DynamicCost>* mode_costing,
+  static bool FormPath(const std::shared_ptr<sif::DynamicCost>* mode_costing,
                                 const sif::TravelMode mode,
                                 baldr::GraphReader& reader,
                                 std::vector<midgard::PointLL> shape,
@@ -34,8 +34,6 @@ class ExpandFromNode {
                                 float& elapsed_time,
                                 std::vector<PathInfo>& path_infos,
                                 const bool from_transition);
- protected:
-
 };
 
 }
