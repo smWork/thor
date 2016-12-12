@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <utility>
 #include <memory>
+#include <functional>
 
 #include <valhalla/baldr/graphid.h>
 #include <valhalla/baldr/graphreader.h>
@@ -24,6 +25,11 @@ constexpr uint32_t kBucketCount = 20000;
  */
 class PathAlgorithm {
  public:
+  /**
+   * Constructor
+   */
+  PathAlgorithm():interrupt(nullptr) { }
+
   /**
    * Destructor
    */
@@ -49,6 +55,16 @@ class PathAlgorithm {
    * Clear the temporary information generated during path construction.
    */
   virtual void Clear() = 0;
+
+  /**
+   * Set a callback that will throw when the path computation should be aborted
+   *
+   * @param interrupt_callback  the function to periodically call to see if we should abort
+   */
+  void set_interrupt(const std::function<void ()>* interrupt_callback) { interrupt = interrupt_callback; }
+
+ protected:
+  const std::function<void()>* interrupt;
 };
 
 }

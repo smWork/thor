@@ -18,7 +18,7 @@ constexpr uint64_t kInitialEdgeLabelCount = 500000;
 
 // Default constructor
 AStarPathAlgorithm::AStarPathAlgorithm()
-    : mode_(TravelMode::kDrive),
+    : PathAlgorithm(), mode_(TravelMode::kDrive),
       travel_type_(0),
       adjacencylist_(nullptr),
       edgestatus_(nullptr),
@@ -135,6 +135,10 @@ std::vector<PathInfo> AStarPathAlgorithm::GetBestPath(PathLocation& origin,
                          // towards destination
   const GraphTile* tile;
   while (true) {
+    // Allow this process to be aborted
+    if(interrupt && (edgelabels_.size() % 5000) == 0)
+      (*interrupt)();
+
     // Get next element from adjacency list. Check that it is valid. An
     // invalid label indicates there are no edges that can be expanded.
     uint32_t predindex = adjacencylist_->pop();

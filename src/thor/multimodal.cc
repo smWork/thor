@@ -143,6 +143,10 @@ std::vector<PathInfo> MultiModalPathAlgorithm::GetBestPath(
 
   const GraphTile* tile;
   while (true) {
+    // Allow this process to be aborted
+    if(interrupt && (edgelabels_.size() % 5000) == 0)
+      (*interrupt)();
+
     // Get next element from adjacency list. Check that it is valid. An
     // invalid label indicates there are no edges that can be expanded.
     uint32_t predindex = adjacencylist_->pop();
