@@ -18,6 +18,7 @@ namespace valhalla {
 namespace thor {
 
 constexpr uint32_t kBucketCount = 20000;
+constexpr size_t kInterruptIterationsInterval = 5000;
 
 /**
  * Pure virtual class defining the interface for PathAlgorithm - the algorithm

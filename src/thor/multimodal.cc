@@ -142,10 +142,13 @@ std::vector<PathInfo> MultiModalPathAlgorithm::GetBestPath(
   std::unordered_set<uint32_t> processed_tiles;
 
   const GraphTile* tile;
+  size_t total_labels = 0;
   while (true) {
     // Allow this process to be aborted
-    if(interrupt && (edgelabels_.size() % 5000) == 0)
+    size_t current_labels = edgelabels_.size();
+    if(interrupt && total_labels/kInterruptIterationsInterval < current_labels/kInterruptIterationsInterval)
       (*interrupt)();
+    total_labels = current_labels;
 
     // Get next element from adjacency list. Check that it is valid. An
     // invalid label indicates there are no edges that can be expanded.
