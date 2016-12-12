@@ -129,7 +129,6 @@ namespace valhalla {
         // Initialize request - get the PathALgorithm to use
         ACTION_TYPE action = static_cast<ACTION_TYPE>(request.get<int>("action"));
         // Allow the request to be aborted
-        interrupt();
         astar.set_interrupt(&interrupt);
         bidir_astar.set_interrupt(&interrupt);
         multi_modal_astar.set_interrupt(&interrupt);
